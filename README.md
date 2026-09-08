@@ -22,6 +22,9 @@ Everything else is exactly as captured.
 - **[_redirects](_redirects)** — the four redirects the live site already answers. Nothing
   here is new; they are carried across so the URLs that work today keep working.
 - **[routes.txt](routes.txt)** — the 186 URLs that make up the site.
+- **[COMMERCE.md](COMMERCE.md)** — what the shop actually is (5 simple products, $13/item
+  flat shipping, state-rate tax, Stripe) and how orders keep working after the move. Short
+  version: the shop is 6 URLs out of 186, so it does not have to move at all.
 
 ## Working on it
 
@@ -80,5 +83,7 @@ Two things must be wired up or the site loses money quietly:
    client-side — so a broken form looks identical to a working one. Every lead-capture page
    is affected.
 2. **WooCommerce does not transact.** Cart, checkout and Stripe render but do nothing.
+   [COMMERCE.md](COMMERCE.md) sets out the options; the recommended one keeps WooCommerce
+   serving the 6 shop URLs and changes nothing about how orders are taken.
 
 Both are covered in MIRROR.md under *What a static copy cannot do*.
