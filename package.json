@@ -1,0 +1,27 @@
+{
+  "name": "water-automation-website",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Static HTML mirror of waterautomation.com — same URLs, same content, no WordPress.",
+  "scripts": {
+    "discover": "node tools/discover.mjs",
+    "mirror": "node tools/mirror-browser.mjs",
+    "mirror:checkout": "node tools/capture-checkout.mjs",
+    "assets": "node tools/fetch-assets.mjs",
+    "fix": "node tools/apply-fixes.mjs",
+    "fix:dry": "node tools/apply-fixes.mjs --dry",
+    "serve": "node tools/serve.mjs",
+    "test": "node tools/test-extract.mjs",
+    "verify": "node tools/verify.mjs",
+    "linkcheck": "node tools/linkcheck.mjs",
+    "verify:live": "node tools/verify.mjs --live",
+    "compare": "node tools/compare.mjs",
+    "functions": "node tools/functions.mjs",
+    "textdiff": "node tools/textdiff.mjs",
+    "compare:mobile": "node tools/compare.mjs --mobile"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.62.1"
+  }
+}

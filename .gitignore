@@ -1,0 +1,23 @@
+# Untouched capture kept for verification only. Every page in it is a near
+# duplicate of the rewritten copy that ships, so committing it would roughly
+# double the repo for no benefit.
+_raw/
+
+# Tooling
+node_modules/
+
+# Local scratch
+.probe/
+shots/
+
+# OS / editor noise
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Generated verification reports. Regenerate with npm run verify / compare.
+.compare.json
+.compare-mobile.json
+.probe.json
+_redirects.observed

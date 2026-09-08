@@ -1,0 +1,99 @@
+.elementor-2381 .elementor-element.elementor-element-7375cc5{--display:flex;--flex-direction:row;--container-widget-width:initial;--container-widget-height:100%;--container-widget-flex-grow:1;--container-widget-align-self:stretch;--flex-wrap-mobile:wrap;--gap:0px 0px;--row-gap:0px;--column-gap:0px;}.elementor-2381 .elementor-element.elementor-element-59ea1c3{--display:flex;--flex-direction:column;--container-widget-width:100%;--container-widget-height:initial;--container-widget-flex-grow:0;--container-widget-align-self:initial;--flex-wrap-mobile:wrap;}.elementor-2381 .elementor-element.elementor-element-0074565{--display:flex;--flex-direction:column;--container-widget-width:calc( ( 1 - var( --container-widget-flex-grow ) ) * 100% );--container-widget-height:initial;--container-widget-flex-grow:0;--container-widget-align-self:initial;--flex-wrap-mobile:wrap;--justify-content:center;--align-items:flex-start;}.woocommerce .elementor-2381 .elementor-element.elementor-element-6071fc2 .price{color:var( --e-global-color-primary );}.elementor-2381 .elementor-element.elementor-element-9e32560 .cart button, .elementor-2381 .elementor-element.elementor-element-9e32560 .cart .button{background-color:var( --e-global-color-9705123 );transition:all 0.2s;}.elementor-2381 .elementor-element.elementor-element-9e32560 .quantity .qty{transition:all 0.2s;}.elementor-2381 .elementor-element.elementor-element-aa1a5a4{--display:flex;--flex-direction:column;--container-widget-width:100%;--container-widget-height:initial;--container-widget-flex-grow:0;--container-widget-align-self:initial;--flex-wrap-mobile:wrap;}.elementor-2381 .elementor-element.elementor-element-41c8ea5{--display:flex;--min-height:320px;--flex-direction:row;--container-widget-width:calc( ( 1 - var( --container-widget-flex-grow ) ) * 100% );--container-widget-height:100%;--container-widget-flex-grow:1;--container-widget-align-self:stretch;--flex-wrap-mobile:wrap;--justify-content:space-between;--align-items:flex-end;--overlay-opacity:1;--border-radius:30px 30px 30px 30px;--padding-top:59px;--padding-bottom:59px;--padding-left:59px;--padding-right:59px;}.elementor-2381 .elementor-element.elementor-element-41c8ea5:not(.elementor-motion-effects-element-type-background), .elementor-2381 .elementor-element.elementor-element-41c8ea5 > .elementor-motion-effects-container > .elementor-motion-effects-layer{background-color:var( --e-global-color-accent );}.elementor-2381 .elementor-element.elementor-element-41c8ea5::before, .elementor-2381 .elementor-element.elementor-element-41c8ea5 > .elementor-background-video-container::before, .elementor-2381 .elementor-element.elementor-element-41c8ea5 > .e-con-inner > .elementor-background-video-container::before, .elementor-2381 .elementor-element.elementor-element-41c8ea5 > .elementor-background-slideshow::before, .elementor-2381 .elementor-element.elementor-element-41c8ea5 > .e-con-inner > .elementor-background-slideshow::before, .elementor-2381 .elementor-element.elementor-element-41c8ea5 > .elementor-motion-effects-container > .elementor-motion-effects-layer::before{background-image:url("/wp-content/uploads/2025/01/line-vector-banner.png");--background-overlay:'';background-position:top center;background-repeat:no-repeat;background-size:cover;}.elementor-2381 .elementor-element.elementor-element-2b70335{--display:flex;--flex-direction:column;--container-widget-width:100%;--container-widget-height:initial;--container-widget-flex-grow:0;--container-widget-align-self:initial;--flex-wrap-mobile:wrap;--justify-content:space-between;--gap:40px 40px;--row-gap:40px;--column-gap:40px;}.elementor-2381 .elementor-element.elementor-element-90a5e3f .elementor-heading-title{font-family:"GT Eesti Display Trial", Sans-serif;font-size:50px;font-weight:400;color:var( --e-global-color-0f6f7f3 );}.elementor-2381 .elementor-element.elementor-element-18aba14{font-family:"GT Eesti Display Trial", Sans-serif;font-size:24px;font-weight:300;line-height:26.4px;color:var( --e-global-color-0f6f7f3 );}.elementor-2381 .elementor-element.elementor-element-7c217de .elementor-button{background-color:var( --e-global-color-0f6f7f3 );font-size:16px;font-weight:400;fill:var( --e-global-color-accent );color:var( --e-global-color-accent );border-radius:50px 50px 50px 50px;padding:15px 25px 15px 25px;}@media(max-width:767px){.elementor-2381 .elementor-element.elementor-element-41c8ea5{--padding-top:25px;--padding-bottom:25px;--padding-left:25px;--padding-right:25px;}.elementor-2381 .elementor-element.elementor-element-90a5e3f .elementor-heading-title{font-size:38px;}.elementor-2381 .elementor-element.elementor-element-18aba14{font-size:18px;}}@media(min-width:768px){.elementor-2381 .elementor-element.elementor-element-59ea1c3{--width:50%;}.elementor-2381 .elementor-element.elementor-element-0074565{--width:50%;}.elementor-2381 .elementor-element.elementor-element-2b70335{--width:500px;}}/* Start Custom Fonts CSS */@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: normal;
+	font-weight: 400;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-Rg.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: italic;
+	font-weight: 400;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-RgIt.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: normal;
+	font-weight: 500;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-Md.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: italic;
+	font-weight: 500;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-MdIt.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: normal;
+	font-weight: 600;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-Bd.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: italic;
+	font-weight: 600;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-BdIt.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: normal;
+	font-weight: 700;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-UBd.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: italic;
+	font-weight: 700;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-UBdIt.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: normal;
+	font-weight: 300;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-Lt.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: italic;
+	font-weight: 300;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-LtIt.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: normal;
+	font-weight: 200;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-Th.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: italic;
+	font-weight: 200;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-ThIt.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: normal;
+	font-weight: 100;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-ULt.woff') format('woff');
+}
+@font-face {
+	font-family: 'GT Eesti Display Trial';
+	font-style: italic;
+	font-weight: 100;
+	font-display: auto;
+	src: url('/wp-content/uploads/2025/01/GT-Eesti-Display-Trial-ULtIt.woff') format('woff');
+}
+/* End Custom Fonts CSS */

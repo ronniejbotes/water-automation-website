@@ -1,0 +1,55 @@
+# Redirects that ALREADY EXIST on waterautomation.com today.
+#
+# Nothing here is new. The migration itself needs no redirects at all: every
+# live URL keeps its exact path in this repo, so /shop/ is shop/index.html,
+# /product/aquahalt-2x/ is product/aquahalt-2x/index.html, and so on. No page
+# moves, so no backlink changes target.
+#
+# These four redirects exist because the LIVE site answers them right now. If
+# the new host does not answer them, these URLs go from working (301 -> a real
+# page) to dead (404). That is the change that would actually cost backlinks, so
+# they are carried across exactly as they behave today. Verified against live on
+# 8 September 2026 by tools/discover.mjs.
+#
+# Each is listed with and without its trailing slash. That is four redirects
+# written eight ways, not eight redirects: the live site answers both forms of
+# every one of them, and the site's own pages link /products/aquahalt without
+# the slash while the sitemap lists it with. Relying on the host to normalise
+# that is how a working URL quietly becomes a 404 on cutover.
+#
+# Format: <from> <to> <status>  — Netlify / Cloudflare Pages style. Apache and
+# nginx equivalents are in MIRROR.md. tools/serve.mjs replays this file locally
+# so the copy can be clicked through the way production will serve it.
+
+# A post published under a dated permalink before the site moved to post-name
+# URLs. Linked from 3 pages and still reachable from outside.
+/2025/11/05/top-10-hidden-plumbing-lines-that-cause-water-damage-and-how-to-stop-leaks-before-they-start   /top-10-hidden-plumbing-lines-that-cause-water-damage-and-how-to-stop-leaks-before-they-start/  301
+/2025/11/05/top-10-hidden-plumbing-lines-that-cause-water-damage-and-how-to-stop-leaks-before-they-start/  /top-10-hidden-plumbing-lines-that-cause-water-damage-and-how-to-stop-leaks-before-they-start/  301
+
+# Old contact slug. Linked from 2 pages.
+/contact   /contact-us/  301
+/contact/  /contact-us/  301
+
+# Superseded landing page. Linked from 2 pages.
+/new-buy-now-lander   /buy-now/  301
+/new-buy-now-lander/  /buy-now/  301
+
+# Old product URL scheme (/products/<name>/ -> /product/<slug>/). The three
+# pages that link this use the slashless form, so that form is not optional.
+/products/aquahalt   /product/aquahalt-2x/  301
+/products/aquahalt/  /product/aquahalt-2x/  301
+
+# NOT included, deliberately:
+#
+#   /checkout/ -> /cart/   This is a 302 that WooCommerce issues at request time
+#                          when the cart is empty. It is application behaviour,
+#                          not a configured rule, and it must not be baked in as
+#                          a redirect — doing so would make the checkout page
+#                          permanently unreachable. The checkout template is
+#                          captured at checkout/index.html by
+#                          tools/capture-checkout.mjs.
+#
+#   /products, /partner/insurance   Both 404 on the live site and always have,
+#                          so there is nothing to redirect and no equity to
+#                          preserve. The links that pointed at them were fixed
+#                          at source instead — see tools/fixes.mjs.

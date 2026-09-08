@@ -1,0 +1,84 @@
+/**
+ * Cases the asset extractor has to keep getting right.
+ *
+ * Every one of these is a shape that actually appears in this site's markup and
+ * that a naive matcher gets wrong. The entity-escaped case is the reason this
+ * file exists: Elementor writes background-video paths as JSON inside an HTML
+ * attribute, so the surrounding quotes arrive as &quot;, and a character class
+ * that allows '&' runs the match past the filename and asks the server for
+ * "…-1.mp4&quot;". That 404s, and the two homepage background videos go missing
+ * without anything failing loudly.
+ *
+ *   node tools/test-extract.mjs
+ */
+import { assetsFromHtml, assetsFromCss, rewrite, toLocalPath } from './site.mjs'
+
+let failures = 0
+function check(name, got, want) {
+  const g = JSON.stringify([...got].sort())
+  const w = JSON.stringify([...want].sort())
+  if (g === w) { console.log('ok    ' + name) }
+  else { failures++; console.log(`FAIL  ${name}\n        got  ${g}\n        want ${w}`) }
+}
+
+check('elementor background video, entity-escaped JSON',
+  assetsFromHtml(String.raw`data-settings="{&quot;background_video_link&quot;:&quot;\/wp-content\/uploads\/2026\/01\/v.mp4&quot;}"`),
+  ['/wp-content/uploads/2026/01/v.mp4'])
+
+check('elementor background image, slash-escaped absolute JSON',
+  assetsFromHtml(String.raw`{"url":"https:\/\/www.waterautomation.com\/wp-content\/uploads\/a.png"}`),
+  ['/wp-content/uploads/a.png'])
+
+check('srcset candidates are all collected',
+  assetsFromHtml('<img src="/a.jpg" srcset="/a-300.jpg 300w, /a-600.jpg 600w">'),
+  ['/a.jpg', '/a-300.jpg', '/a-600.jpg'])
+
+check('video poster and nested source',
+  assetsFromHtml('<video poster="/p.jpg"><source src="/v.mp4"></video>'),
+  ['/p.jpg', '/v.mp4'])
+
+check('lazy-load attributes',
+  assetsFromHtml('<img data-lazy-src="/l.png" data-lazy-srcset="/l-2x.png 2x">'),
+  ['/l.png', '/l-2x.png'])
+
+check('css relative url() resolves against the stylesheet, not the root',
+  assetsFromCss('@font-face{src:url(../fonts/x.woff2)}', '/wp-content/themes/t/css/main.css'),
+  ['/wp-content/themes/t/fonts/x.woff2'])
+
+check('css absolute and external url()',
+  assetsFromCss('.a{background:url("/wp-content/b.jpg")}.c{background:url(https://cdn.example.com/c.png)}', '/x.css'),
+  ['/wp-content/b.jpg'])
+
+check('third-party hosts are left alone',
+  assetsFromHtml('<script src="https://www.googletagmanager.com/gtm.js"></script><img src="https://cdn.trustindex.io/a.png">'),
+  [])
+
+// The bare origin is a homepage link. Stripping the host outright leaves
+// href="", which resolves to the current document — a dead self-link on the
+// header logo of every page.
+check('bare-origin href becomes / and not the empty string',
+  [rewrite('<a href="https://www.waterautomation.com">x</a>')],
+  ['<a href="/">x</a>'])
+
+check('origin with a path becomes root-relative',
+  [rewrite('<a href="https://www.waterautomation.com/shop/">x</a>')],
+  ['<a href="/shop/">x</a>'])
+
+check('canonical is left absolute',
+  [rewrite('<link rel="canonical" href="https://www.waterautomation.com/shop/" />', true)],
+  ['<link rel="canonical" href="https://www.waterautomation.com/shop/" />'])
+
+check('schema graph keeps its absolute @id values',
+  [rewrite('<script type="application/ld+json">{"@id":"https:\\/\\/www.waterautomation.com\\/#org"}</script>', true)],
+  ['<script type="application/ld+json">{"@id":"https:\\/\\/www.waterautomation.com\\/#org"}</script>'])
+
+check('og:image is left absolute',
+  [rewrite('<meta property="og:image" content="https://www.waterautomation.com/a.png" />', true)],
+  ['<meta property="og:image" content="https://www.waterautomation.com/a.png" />'])
+
+check('toLocalPath rejects other hosts',
+  [String(toLocalPath('https://example.com/a.png')), String(toLocalPath('/a.png'))],
+  ['null', '/a.png'])
+
+console.log(failures ? `\n${failures} failing case(s)` : '\nall cases pass')
+process.exit(failures ? 1 : 0)
