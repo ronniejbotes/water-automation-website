@@ -38,20 +38,33 @@ const EXEC = process.env.CHROME || join(process.env.USERPROFILE || process.env.H
   'AppData/Local/ms-playwright/chromium-1234/chrome-win64/chrome.exe')
 const VIEWPORT = MOBILE ? { width: 390, height: 844 } : { width: 1440, height: 900 }
 
-// A screenshot of a page carrying a live chat widget, a reviews carousel and
-// autoplaying video will never match twice in a row, let alone across two
-// origins. These are hidden on both sides so the diff reports layout and
-// content drift rather than the frame each animation happened to be on.
+/**
+ * A screenshot of a page carrying a live chat widget, autoplaying video and a
+ * YouTube embed will never match twice in a row. Those three are hidden on both
+ * sides so the pixel diff reports layout and content drift rather than the frame
+ * each happened to be on.
+ *
+ * The Trustindex reviews widget is deliberately NOT hidden any more. It used to
+ * be, and that was a mistake: its stylesheet was missing from the copy, so it
+ * rendered several thousand pixels tall with full-size avatars and a collapsed
+ * card grid — and the comparison, told to ignore anything matching
+ * `[class*="trustindex"]`, reported those pages as pixel-perfect. A check that
+ * hides a widget cannot tell you the widget is broken.
+ *
+ * Its carousel does rotate, so it is frozen on its first slide instead of
+ * hidden, and its geometry is compared separately below.
+ */
 const NEUTRALISE = `
   for (const el of document.querySelectorAll(
-      'iframe, video, [id*="fastbots"], [class*="fastbots"], .ti-widget, [class*="trustindex"]')) {
+      'iframe, video, [id*="fastbots"], [class*="fastbots"]')) {
     el.style.visibility = 'hidden'
   }
   const s = document.createElement('style')
   s.textContent = \`*,*::before,*::after{
     animation-duration:0s!important;animation-delay:0s!important;
     transition-duration:0s!important;transition-delay:0s!important;
-    caret-color:transparent!important;scroll-behavior:auto!important}\`
+    caret-color:transparent!important;scroll-behavior:auto!important}
+    .ti-widget .ti-controls,.ti-widget .ti-next,.ti-widget .ti-prev{visibility:hidden!important}\`
   document.head.appendChild(s)
 `
 
@@ -92,27 +105,48 @@ async function capture(ctx, url, tag) {
   })
 
   try {
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
+    // 'load', not 'domcontentloaded'. WP Rocket attaches its delayed-script
+    // interaction listeners late; input dispatched before they exist is simply
+    // missed, and the delayed scripts then never run for the whole visit.
+    await page.goto(url, { waitUntil: 'load', timeout: 60000 })
   } catch (e) {
     await page.close()
     return { error: e.message.split('\n')[0], tag }
   }
 
-  // Scroll the whole page so anything deferred loads and any scroll-triggered
-  // animation has run before the screenshot.
+  // Real pointer input first. WP Rocket holds its delayed scripts until a
+  // genuine user-input event, and window.scrollTo() from inside page.evaluate is
+  // not one — it is script, not input. Every earlier pass of this tool scrolled
+  // that way, so the delayed script never ran on either site and the Trustindex
+  // widget stayed an empty <template> in both captures. Two identical blanks
+  // compare as a perfect match, which is how a visibly broken widget passed.
+  // A mouse move and one wheel tick release it.
+  await page.mouse.move(200, 300, { steps: 6 }).catch(() => {})
+  for (let i = 0; i < 4; i++) {
+    await page.mouse.wheel(0, 500).catch(() => {})
+    await page.waitForTimeout(150)
+  }
+  await page.mouse.move(700, 500, { steps: 6 }).catch(() => {})
+  await page.waitForTimeout(800)
+
+  // Then walk the page from script, which is fast, for the lazy images.
   await page.evaluate(async () => {
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
-    const step = Math.round(window.innerHeight * 0.6)
-    let last = -1
-    for (let y = 0; y < document.body.scrollHeight && y !== last; y += step) {
-      last = y; window.scrollTo(0, y); await sleep(80)
+    const step = Math.max(200, Math.round(window.innerHeight * 0.6))
+    let y = 0
+    for (let i = 0; i < 400; i++) {
+      if (y >= document.body.scrollHeight) break
+      window.scrollTo(0, y); await sleep(80); y += step
     }
     window.scrollTo(0, document.body.scrollHeight); await sleep(250)
     window.scrollTo(0, 0); await sleep(150)
   }).catch(() => {})
   await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {})
+  // The reviews widget is fetched and built after the delayed script releases,
+  // so give it time to appear before anything is measured or screenshotted.
+  await page.waitForSelector('.ti-widget', { timeout: 8000 }).catch(() => {})
   await page.evaluate(NEUTRALISE).catch(() => {})
-  await page.waitForTimeout(400)
+  await page.waitForTimeout(600)
 
   const info = await page.evaluate(() => {
     const vis = (el) => {
@@ -138,6 +172,39 @@ async function capture(ctx, url, tag) {
       // signature of a file that was never downloaded.
       brokenImages: imgs.filter((i) => i.complete && i.naturalWidth === 0 && i.currentSrc)
         .map((i) => i.currentSrc.replace(location.origin, '')).slice(0, 25),
+
+      // Third-party widgets, measured rather than trusted. The ones hidden for
+      // the pixel diff are invisible to it by definition, and the reviews widget
+      // proved that a widget can be catastrophically broken while every
+      // whole-page measure still matches. A size is the cheapest thing that
+      // cannot be faked: an unstyled widget is the wrong height, and a widget
+      // that failed to build has no height at all.
+      widgets: (() => {
+        const box = (sel) => {
+          const el = document.querySelector(sel)
+          if (!el) return null
+          const r = el.getBoundingClientRect()
+          return { w: Math.round(r.width), h: Math.round(r.height) }
+        }
+        const ti = document.querySelector('.ti-widget')
+        return {
+          // Whether this page even has a reviews widget to check. Without it,
+          // "trustindex: null on both sides" is ambiguous — it could mean the
+          // page has no widget, or that the widget failed to build on both and
+          // the comparison is blind. The template is in the served HTML either
+          // way, so its presence separates the two cases.
+          trustindexExpected: !!document.getElementById('trustindex-amazon-widget-html'),
+          trustindex: box('.ti-widget'),
+          trustindexReviews: ti ? ti.querySelectorAll('.ti-review-item').length : 0,
+          trustindexAvatar: (() => {
+            const a = ti && ti.querySelector('.ti-profile-img, img')
+            if (!a) return null
+            const r = a.getBoundingClientRect()
+            return { w: Math.round(r.width), h: Math.round(r.height) }
+          })(),
+          chat: box('[class*="fastbots"], [id*="fastbots"]'),
+        }
+      })(),
     }
   })
 
@@ -245,6 +312,24 @@ for (const route of routes) {
   row.jsErrors = { live: live.errors.length, mine: mine.errors.length }
   row.mineErrorSamples = mine.errors.filter((e) => !live.errors.includes(e)).slice(0, 5)
 
+  // Third-party widget geometry, compared side by side. A tolerance of 2px
+  // absorbs sub-pixel layout; anything larger means the widget is built
+  // differently on the copy, which is what a missing stylesheet looks like.
+  row.widgetsSeen = {
+    expected: !!(live.widgets && live.widgets.trustindexExpected),
+    live: !!(live.widgets && live.widgets.trustindex),
+    mine: !!(mine.widgets && mine.widgets.trustindex),
+  }
+  row.widgets = {}
+  for (const k of Object.keys(live.widgets || {})) {
+    if (k === 'trustindexExpected') continue      // reported via widgetsSeen
+    const a = live.widgets[k], b = mine.widgets[k]
+    if (a == null && b == null) continue
+    if (a == null || b == null) { row.widgets[k] = { live: a, mine: b }; continue }
+    if (typeof a === 'number') { if (a !== b) row.widgets[k] = { live: a, mine: b }; continue }
+    if (Math.abs(a.w - b.w) > 2 || Math.abs(a.h - b.h) > 2) row.widgets[k] = { live: a, mine: b }
+  }
+
   if (KEEP_SHOTS && live.shot && mine.shot) {
     const base = route.replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '') || 'home'
     await writeFile(join(SHOTS, `${base}.live.png`), live.shot)
@@ -252,7 +337,8 @@ for (const route of routes) {
   }
 
   const bad = (d && d.pct > 2) || row.title || Object.keys(row.counts).length ||
-    row.text.missing.length || row.brokenImages.length || row.failedRequests.length
+    row.text.missing.length || row.brokenImages.length || row.failedRequests.length ||
+    Object.keys(row.widgets).length
   const flag = bad ? '!' : ' '
   console.log(`${flag} ${route}` +
     `  pixel ${d ? d.pct + '%' : 'n/a'}` +
@@ -260,7 +346,8 @@ for (const route of routes) {
     `  img ${live.counts.imgLoaded}/${live.counts.img} vs ${mine.counts.imgLoaded}/${mine.counts.img}` +
     (row.brokenImages.length ? `  BROKEN-IMG ${row.brokenImages.length}` : '') +
     (row.failedRequests.length ? `  FAILED-REQ ${row.failedRequests.length}` : '') +
-    (Object.keys(row.counts).length ? `  COUNTS ${JSON.stringify(row.counts)}` : ''))
+    (Object.keys(row.counts).length ? `  COUNTS ${JSON.stringify(row.counts)}` : '') +
+    (Object.keys(row.widgets).length ? `  WIDGETS ${JSON.stringify(row.widgets)}` : ''))
   report.push(row)
 }
 
@@ -271,10 +358,29 @@ await writeFile(out, JSON.stringify(report, null, 1))
 
 const flagged = report.filter((r) => r.error || (r.pixel && r.pixel.pct > 2) || r.title ||
   (r.counts && Object.keys(r.counts).length) || (r.brokenImages && r.brokenImages.length) ||
-  (r.failedRequests && r.failedRequests.length) || (r.text && r.text.missing.length))
+  (r.failedRequests && r.failedRequests.length) || (r.text && r.text.missing.length) ||
+  (r.widgets && Object.keys(r.widgets).length))
 
 console.log(`\n--- comparison complete ---`)
 console.log(`routes compared: ${report.length}`)
 console.log(`clean:           ${report.length - flagged.length}`)
 console.log(`flagged:         ${flagged.length}`)
 console.log(`full report:     ${out}`)
+
+/**
+ * A page that carries the reviews template but rendered no widget on EITHER
+ * side was not compared — it was skipped, silently, and counted as a match.
+ * That is the exact shape of the failure this tool missed before: two identical
+ * absences look like agreement. Say so rather than reporting a clean run.
+ */
+const blind = report.filter((r) => r.widgetsSeen &&
+  r.widgetsSeen.expected && !r.widgetsSeen.live && !r.widgetsSeen.mine)
+if (blind.length) {
+  console.log(`\nWARNING: the reviews widget did not render on either side for ${blind.length} route(s).`)
+  console.log(`Those pages were NOT compared for it — an unrendered widget matches an`)
+  console.log(`unrendered widget. Check WP Rocket's delayed script is being released.`)
+  for (const r of blind.slice(0, 10)) console.log(`   ${r.route}`)
+}
+const built = report.filter((r) => r.widgetsSeen && r.widgetsSeen.live).length
+const expected = report.filter((r) => r.widgetsSeen && r.widgetsSeen.expected).length
+if (expected) console.log(`\nreviews widget: built on live for ${built}/${expected} page(s) that carry it`)

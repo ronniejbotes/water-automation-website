@@ -41,6 +41,23 @@ check('lazy-load attributes',
   assetsFromHtml('<img data-lazy-src="/l.png" data-lazy-srcset="/l-2x.png 2x">'),
   ['/l.png', '/l-2x.png'])
 
+// The Trustindex reviews widget names its 72 KB stylesheet in a custom
+// attribute and injects it after load. Nothing here knew that attribute carried
+// a URL, so the file was never downloaded and the widget rendered unstyled on
+// all 11 pages that carry it — the homepage, both landers and every city page.
+// The extractor now matches any attribute holding a same-origin file path.
+check('stylesheet named in a custom attribute (data-css-url)',
+  assetsFromHtml('<div data-template-id="t" data-css-url="/wp-content/uploads/trustindex-amazon-widget.css?178"></div>'),
+  ['/wp-content/uploads/trustindex-amazon-widget.css?178'])
+
+check('an invented attribute holding an asset path is still collected',
+  assetsFromHtml('<div data-whatever-url="/wp-content/uploads/x.png" data-config-js="/wp-content/y.js"></div>'),
+  ['/wp-content/uploads/x.png', '/wp-content/y.js'])
+
+check('prose in an attribute is not mistaken for a path',
+  assetsFromHtml('<meta name="description" content="Costs $9.99. Visit us. Ask about aquaHALT."><div title="v1.2 release">x</div>'),
+  [])
+
 check('css relative url() resolves against the stylesheet, not the root',
   assetsFromCss('@font-face{src:url(../fonts/x.woff2)}', '/wp-content/themes/t/css/main.css'),
   ['/wp-content/themes/t/fonts/x.woff2'])

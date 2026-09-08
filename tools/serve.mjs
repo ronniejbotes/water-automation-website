@@ -8,8 +8,11 @@
  *
  *   node tools/serve.mjs            # http://localhost:4400
  *   PORT=5000 node tools/serve.mjs
+ *   npm run serve:lan              # 0.0.0.0:4401 — reachable from a phone on
+ *                                  # the same network; prints the LAN URL
  */
 import { createServer } from 'node:http'
+import { networkInterfaces } from 'node:os'
 import { readFile, stat } from 'node:fs/promises'
 import { join, extname, resolve, dirname, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -17,6 +20,10 @@ import { fileURLToPath } from 'node:url'
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DIR = join(ROOT, process.env.SERVE_DIR || '.')
 const PORT = Number(process.env.PORT || 4400)
+// 0.0.0.0 exposes the preview to the local network so it can be opened on a
+// phone. Every URL in the mirror is root-relative, so it serves correctly from
+// any host without a rebuild.
+const HOST = process.env.HOST || '127.0.0.1'
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -127,6 +134,16 @@ createServer(async (req, res) => {
     res.writeHead(404, { 'Content-Type': 'text/plain' })
     return res.end('404')
   }
-}).listen(PORT, () => {
-  console.log(`Serving ${DIR}\n  http://localhost:${PORT}/`)
+}).listen(PORT, HOST, () => {
+  console.log(`Serving ${DIR}`)
+  console.log(`  http://localhost:${PORT}/`)
+  if (HOST === '0.0.0.0') {
+    for (const [name, addrs] of Object.entries(networkInterfaces())) {
+      for (const a of addrs || []) {
+        if (a.family === 'IPv4' && !a.internal) {
+          console.log(`  http://${a.address}:${PORT}/   (${name} — open this on a phone)`)
+        }
+      }
+    }
+  }
 })

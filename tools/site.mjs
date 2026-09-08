@@ -114,6 +114,24 @@ export function assetsFromHtml(html) {
     found.add(u)
   }
   for (const m of html.matchAll(/(?:src|href|content|data-src|data-lazy-src|poster)=(["'])(.*?)\1/gi)) add(m[2])
+
+  // Any attribute at all whose value is a same-origin path ending in a file
+  // extension. Naming the attributes that carry URLs does not work: plugins
+  // invent their own, a script reads them at runtime, and a static extractor
+  // that does not know the name never sees the file.
+  //
+  // That is not hypothetical. Trustindex's review widget names its 72 KB
+  // stylesheet in `data-css-url`, its loader injects it after load, and because
+  // nothing here looked at that attribute the file was never downloaded — so the
+  // widget rendered unstyled on the copy, avatars at full size and the card grid
+  // collapsed, while every other check reported the page complete.
+  //
+  // toLocalPath drops anything not on this origin, and the extension is required,
+  // so an attribute holding ordinary prose cannot match.
+  for (const m of html.matchAll(
+    /\b[a-zA-Z_:][-a-zA-Z0-9_:.]*=(["'])((?:\/|https?:\/\/)[^"'\s]*?\.[a-zA-Z0-9]{2,5}(?:\?[^"'\s]*)?)\1/g)) {
+    add(m[2])
+  }
   for (const m of html.matchAll(/(?:srcset|data-srcset|data-lazy-srcset|imagesrcset)=(["'])(.*?)\1/gi)) {
     for (const part of m[2].split(',')) add(part.trim().split(/\s+/)[0])
   }

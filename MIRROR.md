@@ -49,8 +49,9 @@ Three of those routes are in no sitemap — `/case-studies/`, `/my-account/lost-
 and `/uncategorized/`. They were found by crawling every link on every page, return HTTP
 200 on the live site, and so were mirrored too.
 
-**1,230 files / 213 MB total**: 443 JPEG, 284 PNG, 38 WebP, 13 SVG, 5 MP4, 3 PDF product
-manuals, 120 JavaScript, 98 stylesheets, 17 font files and the 5 Yoast sitemaps.
+**1,241 files / 213 MB total**: 443 JPEG, 284 PNG, 38 WebP, 13 SVG, 5 MP4, 3 PDF product
+manuals, 120 JavaScript, 99 stylesheets, 17 font files, the 5 Yoast sitemaps and the XSL
+stylesheet that renders them.
 
 ---
 
@@ -171,7 +172,12 @@ Animations, video and the third-party review and chat widgets are frozen and hid
 sides first, so the diff reports layout and content drift rather than which frame each
 animation happened to be on.
 
-**Result over all 181 pages, 8 September 2026:**
+> **These figures were produced by a comparison that was blind to the reviews
+> widget, and are superseded.** See [The reviews widget, and what it broke in
+> this tooling](#the-reviews-widget-and-what-it-broke-in-this-tooling). The
+> corrected numbers are in the table below it.
+
+**Superseded result over all 181 pages, 8 September 2026:**
 
 | Measure | Result |
 |---|---|
@@ -193,6 +199,80 @@ This is why `tools/textdiff.mjs` says to run it twice before believing it.
 Content differences reduce to exactly one thing, on every page: the five words
 "No products in the cart." that WooCommerce injects into the mini-cart over AJAX. It sits
 inside a closed dropdown, which is why those pages still diff at 0% visually.
+
+### Corrected result — all 181 pages, reviews widget rendering on both sides
+
+Re-run after the widget was fixed and the tooling stopped being blind to it. These are the
+figures that stand.
+
+| Measure | Result |
+|---|---|
+| Pixel-identical (0.00%) | **137 of 181** |
+| Within 0.10% | 163 of 181 |
+| Within 1.00% | 171 of 181 |
+| Mean / median pixel difference | 0.177% / 0.000% |
+| Full-page height differs from live | **0 pages** |
+| `<title>` differs from live | **0 pages** |
+| Broken images on the copy | **0** |
+| Requests failing on the copy but not live | **0** |
+| Reviews-widget geometry mismatches | **0 of 11** |
+| Pages where the widget rendered on neither side (uncompared) | **0** |
+
+The 10 pages above 1% are, with one exception, the pages carrying the reviews widget: its
+carousel rotates, so the two screenshots catch different reviews. Re-running them
+individually moves the number every time and in both directions —
+`/product/aquahalt-2x/` went 4.24% → 0.00%, `/water-leak-protection-new-york/` 4.28% →
+0.98%. Image-decode counts swing both ways too: Chicago showed 57 live / 60 copy on one
+pass and 56 live / 61 copy on the next. That is lazy-loading timing, not missing files —
+`brokenImages` is 0 everywhere and the runtime audit finds no 404 on any page.
+
+Content differences reduce to the mini-cart's five words, plus the same rotating-content
+noise: words that appear as "missing" on one city page show up as "extra" on another in the
+same run.
+
+### The reviews widget, and what it broke in this tooling
+
+The Amazon reviews widget on the homepage rendered unstyled on the copy — avatars at full
+size, the card grid collapsed, thousands of pixels of broken layout — while every check
+above reported those pages as pixel-perfect. It was spotted by eye, not by any tool here.
+Worth writing down, because two separate mistakes had to line up for that to happen.
+
+**The cause.** Trustindex names its 72 KB stylesheet in a custom attribute,
+`data-css-url="/wp-content/uploads/trustindex-amazon-widget.css"`, and its loader injects it
+after the page loads. The extractor matched `src`, `href`, `content`, `poster` and the
+`data-src` family — a list of attribute names — so it never saw that file, never downloaded
+it, and `verify` called the page complete because every reference it *knew how to look for*
+resolved. Fixed by matching **any** attribute whose value is a same-origin path ending in a
+file extension. A re-scan of the whole site found exactly one file missed this way: that one.
+
+**Why nothing caught it.** Two independent failures:
+
+1. `compare.mjs` was told to hide `[class*="trustindex"]` before diffing, to stop the review
+   carousel rotating between the two screenshots. A check that hides a widget cannot report
+   that the widget is broken. Now it stays visible, its carousel controls are frozen instead,
+   and its width, height, review count and avatar size are compared against live directly.
+
+2. More seriously, **the widget was never rendering in any automated pass, on either site**.
+   WP Rocket delays this script until a genuine user-input event, and `window.scrollTo()`
+   from inside `page.evaluate` is script, not input. So both captures contained an empty
+   `<template>`, and two identical blanks compare as a perfect match. Every tool here now
+   opens pages with `waitUntil: 'load'` and dispatches real `mouse.move` and `mouse.wheel`
+   events before measuring. The difference is not subtle: the homepage measures 1,758 words
+   and 68 images with the widget built, against 1,107 and 20 without it.
+
+`compare.mjs` now refuses to quietly repeat this. It records whether the widget was
+*expected* on a page (the template is in the served HTML) and whether it actually built on
+each side, and prints a warning naming any page where it rendered on neither — because that
+page was not compared, it was skipped.
+
+**Scope.** 11 pages carry this widget: the homepage, `/builder-lander/`,
+`/habtrack-lander/` and all eight `/water-leak-protection-<city>/` pages. All eleven were
+visibly broken, and they are among the most commercially important pages on the site.
+
+`npm run audit` is the general defence: it loads every page against the local server, with
+real input, and records every same-origin request that 404s. It needs no list of attribute
+names, because a browser does not need to be told which attributes hold URLs — it just asks
+for things. Across all 181 pages it now reports zero.
 
 ### `npm run functions` — does it still *work*
 
@@ -274,6 +354,16 @@ none of it survives the move to static HTML without a replacement being wired up
 | Product search and catalogue filtering | WooCommerce queries | Not functional |
 | Affiliate tracking | affiliates plugin | Not functional |
 | Mini-cart contents | `?wc-ajax=get_refreshed_fragments` | Dropdown renders empty on every page |
+
+**One visible consequence of that last row.** A static host ignores query strings, so
+`GET /?wc-ajax=get_refreshed_fragments` resolves to `index.html`: WooCommerce's mini-cart
+script asks for 827 bytes of JSON and receives the entire 242 KB homepage. It fails to parse
+it and retries, which is why `/cart/` ends up with three Stripe controller iframes instead of
+one. They are 1440x1 and invisible — the page still compares at 0% — and none of this
+matters while WooCommerce cannot transact anyway. It is listed because it looks alarming in a
+console and has an ordinary explanation. Silencing it needs host-level routing (a Netlify
+redirect, a Cloudflare Worker) returning `{"fragments":{},"cart_hash":""}` for that query;
+nothing in this repo can do it, because no file can answer a query string on a static host.
 
 **The forms are the urgent one.** 23 of them across the site, including every
 lead-capture page. On cutover they need a form endpoint (Formspree, Netlify Forms, a
