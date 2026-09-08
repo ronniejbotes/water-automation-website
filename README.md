@@ -40,8 +40,10 @@ works on Netlify, Cloudflare Pages, Vercel, GitHub Pages, Apache or nginx.
 ## Checking it
 
 ```bash
-npm test            # the extractor's edge cases — 14 shapes this site's markup actually uses
+npm test            # the extractor's edge cases — 17 shapes this site's markup actually uses
 npm run verify      # every route present, every reference resolves, no origin leaks
+npm run linkcheck   # requests every internal link, checks every #anchor exists
+npm run audit       # loads every page with real input, logs every same-origin 404
 npm run compare     # rendered pixel + text + element diff against the live site
 npm run compare:mobile
 npm run functions   # drives the menus, carousels and accordions on both sites
@@ -53,11 +55,17 @@ three open the live site and the copy side by side in a real browser and scroll 
 because the failure worth catching — one missing script leaving every widget inert —
 screenshots perfectly at the top of the page.
 
-As captured: **127 of 181 pages are pixel-identical to live**, 170 are within 1%, and page
-height and `<title>` match on all 181. The pages that differ by more than 1% compare at 0%
-when re-run on their own — the site rotates carousels and reveals sections on scroll, so a
-single sample is not evidence. **Run any comparison twice before acting on it.** Full
-numbers and what they mean are in [MIRROR.md](MIRROR.md#verification).
+As captured: **137 of 181 pages are pixel-identical to live**, 171 are within 1%, and page
+height and `<title>` match on all 181. Broken images, and requests that fail on the copy but
+not on live, are both zero. The pages that differ by more than 1% compare at 0% when re-run
+on their own — the site rotates carousels and reveals sections on scroll, so a single sample
+is not evidence. **Run any comparison twice before acting on it.**
+
+`npm run audit` is the check to trust most, because it needs no list of what to look for: it
+loads every page and records anything that 404s. It is what would have caught the reviews
+widget, whose stylesheet was named in an attribute the extractor did not know about. Full
+numbers, and the two ways that failure hid from every other check, are in
+[MIRROR.md](MIRROR.md#verification).
 
 ## Rebuilding from live
 
