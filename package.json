@@ -16,6 +16,7 @@
     "test": "node tools/test-extract.mjs",
     "verify": "node tools/verify.mjs",
     "linkcheck": "node tools/linkcheck.mjs",
+    "forms": "node tools/form-inventory.mjs",
     "audit": "node tools/runtime-audit.mjs",
     "audit:fetch": "node tools/runtime-audit.mjs --fetch",
     "verify:live": "node tools/verify.mjs --live",
