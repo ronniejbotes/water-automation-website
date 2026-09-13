@@ -1,0 +1,145 @@
+/**
+ * Apply the content blocks in tools/content.mjs to the captured HTML.
+ *
+ * Why this exists separately from apply-fixes.mjs
+ * -----------------------------------------------
+ * tools/fixes.mjs is deliberately narrow: "it fixes something that is broken on
+ * the live site. This is not the place for redesign, copy changes or SEO edits."
+ * That rule is worth keeping, because it is what makes `npm run fix:dry` a
+ * readable answer to "what did we change about the capture, and why?".
+ *
+ * But SEO edits have exactly the same failure mode as link fixes: `npm run mirror`
+ * writes the live site's markup verbatim, so anything hand-typed into a page is
+ * gone after the next rebuild, silently, with no error and no diff to notice.
+ * A month of content work can evaporate into a command that looks like it
+ * succeeded.
+ *
+ * So content gets the same treatment as fixes — held as data, re-applied by a
+ * script — in its own file, so the two never get confused for each other.
+ *
+ * Rules for anything added to tools/content.mjs:
+ *
+ *   - It is a deliberate divergence from the live site. That is the point.
+ *     `npm run verify -- --live` will report the title/description of an edited
+ *     page as differing from live, and that is correct, not a regression.
+ *   - Every block carries a `why`. Six months from now the reason a paragraph
+ *     says "up to 5 years" is not recoverable from the paragraph.
+ *   - Inserts are wrapped in <!-- wa:content:ID --> markers, which is how this
+ *     script knows a block is already in place. Do not remove the markers.
+ *   - Replacements carry `expect`. If the count moves, the capture changed
+ *     underneath the edit and it needs re-reading before it is trusted.
+ *
+ *   node tools/apply-content.mjs
+ *   node tools/apply-content.mjs --dry     # report what would change
+ */
+import { readFile, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { join, resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { CONTENT } from './content.mjs'
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const DIR = join(ROOT, process.env.MIRROR_DIR || '.')
+const DRY = process.argv.includes('--dry')
+
+const open = (id) => `<!-- wa:content:${id} -->`
+const close = (id) => `<!-- /wa:content:${id} -->`
+
+const edits = new Map() // absolute path -> new content
+const report = []
+let failed = false
+
+const read = async (abs) => edits.get(abs) ?? (await readFile(abs, 'utf8'))
+
+for (const block of CONTENT) {
+  const files = block.files ?? []
+  if (!files.length) {
+    report.push({ id: block.id, ok: false, detail: 'no files listed' })
+    failed = true
+    continue
+  }
+
+  let applied = 0
+  let already = 0
+  const problems = []
+
+  for (const rel of files) {
+    const abs = join(DIR, rel)
+    if (!existsSync(abs)) {
+      problems.push(`${rel}: file not found`)
+      continue
+    }
+
+    let html = await read(abs)
+
+    if (block.kind === 'insert') {
+      if (html.includes(open(block.id))) {
+        already++
+        continue
+      }
+      const hits = html.split(block.anchor).length - 1
+      if (hits !== 1) {
+        problems.push(`${rel}: anchor matched ${hits} time(s), needs exactly 1`)
+        continue
+      }
+      const wrapped = `${open(block.id)}\n${block.html}\n${close(block.id)}\n`
+      html =
+        block.position === 'after'
+          ? html.replace(block.anchor, block.anchor + '\n' + wrapped)
+          : html.replace(block.anchor, wrapped + block.anchor)
+      edits.set(abs, html)
+      applied++
+    } else if (block.kind === 'replace') {
+      const hits = html.split(block.from).length - 1
+      if (hits === 0) {
+        // Either already applied, or the capture moved underneath it. Those are
+        // very different situations, so tell them apart rather than guessing.
+        if (html.includes(block.to)) already++
+        else problems.push(`${rel}: neither the original nor the replacement is present`)
+        continue
+      }
+      html = html.split(block.from).join(block.to)
+      edits.set(abs, html)
+      applied += hits
+    } else {
+      problems.push(`${rel}: unknown kind "${block.kind}"`)
+    }
+  }
+
+  const expected = block.expect ?? files.length
+  const ok =
+    problems.length === 0 && (applied === expected || (applied === 0 && already === files.length))
+
+  if (!ok) failed = true
+  report.push({
+    id: block.id,
+    ok,
+    detail:
+      `${block.kind} across ${files.length} file(s): applied ${applied}, expected ${expected}` +
+      (already ? `, already in place ${already}` : ''),
+    problems,
+  })
+}
+
+console.log(
+  `Applying ${CONTENT.length} content block(s)${DRY ? ' (dry run)' : ''}\n`
+)
+for (const r of report) {
+  console.log(`${r.ok ? 'ok  ' : 'FAIL'}  ${r.id}`)
+  console.log(`        ${r.detail}`)
+  for (const p of r.problems ?? []) console.log(`        ${p}`)
+}
+
+if (!DRY && !failed) {
+  for (const [abs, html] of edits) await writeFile(abs, html)
+}
+
+console.log(`\n--- ${DRY ? 'dry run' : failed ? 'aborted, nothing written' : 'content applied'} ---`)
+console.log(`files rewritten: ${DRY || failed ? 0 : edits.size}`)
+if (failed) {
+  console.log(
+    `\nNothing was written. A block that does not match means the capture changed\n` +
+      `under it — re-read the page before trusting the block.`
+  )
+}
+process.exit(failed ? 1 : 0)
