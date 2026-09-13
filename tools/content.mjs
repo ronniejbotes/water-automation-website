@@ -233,4 +233,44 @@ const SPECS = [
   ),
 ]
 
-export const CONTENT = [...BATTERY, ...META, ...SPECS]
+// ---------------------------------------------------------------------------
+// Floating overlays
+// ---------------------------------------------------------------------------
+
+const OVERLAYS = [
+  {
+    id: 'overlay-hygiene',
+    kind: 'insert',
+    allHtml: true,
+    anchor: '</head>',
+    position: 'before',
+    htmlFile: 'content/overlay-hygiene.html',
+    why: `
+      Four things pin themselves to the viewport on every page and none of them
+      knows about the others: an Elementor fixed widget holding an autoplaying
+      greeter video on an 8-second delay, the FastBots greeting bubble, the
+      FastBots launcher, and the cart pill. Between them they carry no media
+      query at all, so on a 390px screen three of them stack down the left edge
+      and cover the hero's proof paragraph — the one naming Chubb, the patent and
+      the TIME listing. That is the overlap the client reported.
+
+      The chat widget is third-party and injects at z-index 2147483647, so it can
+      only be constrained from outside with !important. Everything is scoped to a
+      breakpoint: below 768px the auto-opening bubble and the video greeter are
+      suppressed and the launcher is shrunk into the corner; at 768px and above
+      the bottom-left chat pattern is left working and merely tidied, because
+      there it is normal and unobtrusive.
+
+      Two judgement calls worth surfacing to the client, both reversible in this
+      one file: hiding the greeter video on phones removes a marketing asset on
+      the device where most traffic is, and suppressing the auto-greeting will
+      reduce chat volume. Both were traded for not covering the copy that does
+      the selling.
+
+      Injected before </head> on every page rather than into a stylesheet,
+      because the mirror's CSS files are captured artefacts and a rebuild would
+      overwrite an edit to them without warning.`,
+  },
+]
+
+export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS]

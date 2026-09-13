@@ -256,6 +256,107 @@ body, h1, h2, h3, h4, h5, h6, p, a, span, .woocommerce * {
     display: none;
 }
 </style>
+<!-- wa:content:overlay-hygiene -->
+<style id="wa-overlay-hygiene">
+/*
+ * Floating-overlay hygiene.
+ *
+ * Four separate things pin themselves to the viewport on every page, none of them
+ * aware of the others and none of them carrying a single media query:
+ *
+ *   1. .elementor-element-f383503  a fixed HTML widget holding an autoplaying
+ *                                  greeter video, revealed after an 8-second
+ *                                  fadeInLeft delay. ~110x145 on a phone, and it
+ *                                  lands in the middle of the left edge, on top of
+ *                                  body copy.
+ *   2. #welcomeMessages            the FastBots greeting bubble, 224x61, fixed at
+ *                                  bottom:90px left:20px, z-index 2147483647. It
+ *                                  opens by itself and sits across the hero
+ *                                  paragraph.
+ *   3. #chat-widget-push-to-talk   the FastBots launcher, 63x63, bottom-left.
+ *   4. the Elementor cart pill     bottom-right.
+ *
+ * On a 390px screen the first three stack down the left edge at once and the copy
+ * they cover is the hero's proof paragraph. That is the "everything is overlapping"
+ * the client reported.
+ *
+ * The third-party widget cannot be configured from here, so it is constrained with
+ * !important at equal specificity. Everything is scoped to a breakpoint so the
+ * desktop experience, which is a normal and acceptable bottom-left chat pattern,
+ * keeps working.
+ */
+
+/* ---- Phones ------------------------------------------------------------- */
+@media (max-width: 767px) {
+
+  /* The greeting opens unprompted and covers the paragraph that carries the
+     Chubb/TIME/patent proof. The launcher remains, so nothing is lost except the
+     interruption — a visitor who wants the chat still taps the avatar. */
+  #welcomeMessages { display: none !important; }
+
+  /* The delayed video greeter is decorative, autoplays, and on a phone there is
+     no position for a 110x145 fixed box that is not on top of something. Hidden
+     below 768px only; it still plays on tablet and desktop. */
+  .elementor-element-f383503 { display: none !important; }
+
+  /* Smaller launcher, tucked into the corner, clear of the iOS home indicator. */
+  #chat-widget-push-to-talk {
+    width: 52px !important;
+    height: 52px !important;
+    left: 12px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Both floating controls sit above the end of the document, so the last
+     content on every page was unreachable underneath them. */
+  body { padding-bottom: 84px !important; }
+}
+
+/* ---- Tablet and desktop -------------------------------------------------- */
+@media (min-width: 768px) {
+
+  /* The bubble is unstyled by default — square corners, no shadow, and a bare
+     "X" glyph run into the text. Give it the same soft-card treatment the rest
+     of the site uses so it reads as part of the design. */
+  #welcomeMessages {
+    border-radius: 14px !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    overflow: hidden !important;
+  }
+
+  /* The launcher sits hard against the bottom-left corner and is visually
+     clipped by it. Lift it clear. */
+  #chat-widget-push-to-talk {
+    left: 24px !important;
+    bottom: 24px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22) !important;
+  }
+
+  /* The three floating pieces were each positioned independently — the greeter
+     video at 14px, the bubble at 32px, the launcher at 23px — so they read as
+     three unrelated things dumped in the corner rather than one column. Align
+     them to a single left edge, and sit the bubble directly above the launcher. */
+  #welcomeMessages {
+    left: 24px !important;
+    bottom: 100px !important;
+  }
+
+  .elementor-element-f383503 {
+    left: 24px !important;
+  }
+}
+
+/* ---- Motion ------------------------------------------------------------- */
+/* The launcher ships with a permanent pulse animation. Respect the OS setting. */
+@media (prefers-reduced-motion: reduce) {
+  #chat-widget-push-to-talk,
+  #chat-widget-push-to-talk.avatar-animation-pulse {
+    animation: none !important;
+  }
+}
+</style>
+<!-- /wa:content:overlay-hygiene -->
 </head>
 <body class="wp-singular post-template-default single single-post postid-1854 single-format-standard wp-custom-logo wp-embed-responsive wp-theme-hello-elementor theme-hello-elementor woocommerce-no-js hello-elementor-default elementor-default elementor-kit-6 elementor-page-453">
 

@@ -33,8 +33,8 @@
  *   node tools/apply-content.mjs --dry     # report what would change
  */
 import { readFile, writeFile } from 'node:fs/promises'
-import { existsSync, readFileSync } from 'node:fs'
-import { join, resolve, dirname } from 'node:path'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { join, resolve, dirname, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { CONTENT } from './content.mjs'
 
@@ -66,8 +66,25 @@ let failed = false
 
 const read = async (abs) => edits.get(abs) ?? (await readFile(abs, 'utf8'))
 
+// A block can name its files, or set allHtml to mean "every page in the mirror".
+// Sitewide CSS has to go everywhere, and listing 183 paths in content.mjs would
+// bury the decision under the data.
+const SKIP_DIRS = new Set(['.git', 'node_modules', '_raw', 'tools', 'shots', '.probe'])
+const allHtmlFiles = []
+{
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (SKIP_DIRS.has(e.name)) continue
+      const p = join(dir, e.name)
+      if (e.isDirectory()) walk(p)
+      else if (e.name.endsWith('.html')) allHtmlFiles.push(relative(DIR, p).split('\\').join('/'))
+    }
+  }
+  walk(DIR)
+}
+
 for (const block of CONTENT) {
-  const files = block.files ?? []
+  const files = block.allHtml ? allHtmlFiles : block.files ?? []
   if (!files.length) {
     report.push({ id: block.id, ok: false, detail: 'no files listed' })
     failed = true
