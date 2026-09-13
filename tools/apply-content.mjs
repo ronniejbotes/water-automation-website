@@ -94,6 +94,7 @@ for (const block of CONTENT) {
   let applied = 0
   let already = 0
   let resynced = 0
+  let absent = 0
   const problems = []
 
   for (const rel of files) {
@@ -144,6 +145,10 @@ for (const block of CONTENT) {
     } else if (block.kind === 'replace') {
       const hits = html.split(block.from).length - 1
       if (hits === 0) {
+        // A sitewide replace runs against every page, and most pages will not
+        // contain the string — that is normal, not a fault. Only a replace aimed
+        // at named files can meaningfully say "this should have been here".
+        if (block.allHtml) { absent++; continue }
         // Either already applied, or the capture moved underneath it. Those are
         // very different situations, so tell them apart rather than guessing.
         if (html.includes(block.to)) already++
@@ -161,7 +166,10 @@ for (const block of CONTENT) {
   const expected = block.expect ?? files.length
   const ok =
     problems.length === 0 &&
-    (applied === expected || applied + already + resynced === files.length)
+    (applied === expected ||
+      applied + already + resynced === files.length ||
+      // a sitewide replace that has already been applied everywhere
+      (block.allHtml && applied === 0 && absent + already === files.length))
 
   if (!ok) failed = true
   report.push({
@@ -170,7 +178,8 @@ for (const block of CONTENT) {
     detail:
       `${block.kind} across ${files.length} file(s): applied ${applied}, expected ${expected}` +
       (resynced ? `, re-synced ${resynced}` : '') +
-      (already ? `, already in place ${already}` : ''),
+      (already ? `, already in place ${already}` : '') +
+      (absent ? `, not present in ${absent}` : ''),
     problems,
   })
 }

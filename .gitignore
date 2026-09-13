@@ -32,4 +32,6 @@ Desktop.ini
 .probe.json
 .mobile-audit-*.json
 .mobile-audit-*.log
+.image-audit.json
+.image-audit.log
 _redirects.observed

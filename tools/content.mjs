@@ -273,4 +273,120 @@ const OVERLAYS = [
   },
 ]
 
-export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS]
+// ---------------------------------------------------------------------------
+// Brand name: one spelling
+// ---------------------------------------------------------------------------
+//
+// Raised by the client: the company name is written inconsistently, "water"
+// lowercase against "AUTOMATION" uppercase, and differently again on other
+// pages. Measured across the mirror, it is worse than it looks from the page:
+//
+//   Organization + WebSite schema "name"   waterAUTOMATION    366x, all 183 pages
+//   og:site_name                           Water Automation   183x, all 183 pages
+//   <title>                                Water Automation    59 of 65
+//   visible body copy                      Water Automation    68 of 73
+//
+// So every page tells Google the organisation is called "waterAUTOMATION" while
+// telling Facebook and LinkedIn it is called "Water Automation". Those are the
+// two machine-readable brand fields on the page and they disagree sitewide. The
+// schema name is the one that feeds a knowledge panel, and it is the minority
+// spelling.
+//
+// Normalised to "Water Automation" because that is already the dominant form on
+// every surface a human or a crawler reads: all 183 og:site_name tags, 59 of 65
+// titles, 68 of 73 visible mentions. It also reads correctly in a sentence,
+// which "waterAUTOMATION" does not.
+//
+// The LOGO is untouched. A stylised lockup that differs from the written name is
+// normal branding, not an inconsistency — this is about the text.
+//
+// If the client would rather standardise on the stylised form, it is these four
+// blocks and nothing else.
+//
+// Deliberately NOT touched: https://www.facebook.com/WaterAutomationNow, which
+// appears 170 times across 169 pages. A blanket replace of "WaterAutomation"
+// would break that link on every page, which is why each replacement below is
+// anchored to the exact surface it corrects rather than matching the bare word.
+
+const BRAND = [
+  {
+    id: 'brand-schema-name',
+    kind: 'replace',
+    allHtml: true,
+    from: '"name":"waterAUTOMATION"',
+    to: '"name":"Water Automation"',
+    expect: 366,
+    why: `The Organization and WebSite schema names. This is what structured-data
+      consumers — Google's knowledge panel among them — read as the name of the
+      business, and it disagreed with og:site_name on all 183 pages.`,
+  },
+  {
+    id: 'brand-visible-spaced',
+    kind: 'replace',
+    allHtml: true,
+    from: 'water AUTOMATION',
+    to: 'Water Automation',
+    expect: 46,
+    why: `The spelling the client actually pointed at. 46 occurrences across 12
+      pages, in body copy, an H2, a marketing-consent checkbox on /expo-signup/
+      and several meta descriptions. Safe as a plain string replace because this
+      spaced form never appears inside a URL.`,
+  },
+  {
+    id: 'brand-nospace',
+    kind: 'replace',
+    allHtml: true,
+    from: 'waterAUTOMATION',
+    to: 'Water Automation',
+    expect: 258,
+    why: `The run-together form, which the spaced replacement above does not catch.
+      258 occurrences across 186 pages: the Organization logo caption in the schema
+      on every page, plus body copy and calls to action across the blog — "Contact
+      waterAUTOMATION", "Request a demo from waterAUTOMATION", "aquaHALT by
+      waterAUTOMATION".
+
+      Safe as a plain global replace, checked rather than assumed: this exact
+      casing never appears inside an href, a src or any URL. The site's own links
+      use lowercase waterautomation.com, and the Facebook profile is
+      WaterAutomationNow — a different string that this does not touch.`,
+  },
+  {
+    id: 'brand-title-contact',
+    kind: 'replace',
+    files: ['contact-us/index.html'],
+    from: '<title>Contact waterAUTOMATION | Contact Us</title>',
+    to: '<title>Contact Water Automation | Contact Us</title>',
+    expect: 1,
+    why: `A title tag, so this is the brand as it appears in the search result.`,
+  },
+  {
+    id: 'brand-title-suffixes',
+    kind: 'replace',
+    files: ['detection-is-protection/index.html'],
+    from: ' | waterAUTOMATION</title>',
+    to: ' | Water Automation</title>',
+    expect: 1,
+    why: `Title suffix on /detection-is-protection/.`,
+  },
+  {
+    id: 'brand-title-dotcom',
+    kind: 'replace',
+    files: ['habtrack-lander/index.html'],
+    from: ' | WaterAutomation.com</title>',
+    to: ' | Water Automation</title>',
+    expect: 1,
+    why: `/habtrack-lander/ used the domain as the brand in its title. The brand is
+      the company name; the domain is an address.`,
+  },
+  {
+    id: 'brand-title-nospace',
+    kind: 'replace',
+    files: ['when-insurance-wont-pay-understandingwater-damage-exclusions-and-howprevention-covers-the-gaps/index.html'],
+    from: ' | WaterAutomation</title>',
+    to: ' | Water Automation</title>',
+    expect: 1,
+    why: `Title suffix on the insurance-exclusions post.`,
+  },
+]
+
+export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND]

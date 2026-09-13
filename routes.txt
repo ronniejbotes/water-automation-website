@@ -1,9 +1,11 @@
 # Every URL that answers 200 on waterautomation.com, as discovered by
 # tools/discover.mjs. This is the capture manifest for tools/mirror-browser.mjs.
-# Generated 2026-09-08 — 186 routes.
+# Generated 2026-09-08 — 189 routes.
 /
 /2435/
 /about-us/
+/aquahalt-battery-warning-and-post-shutoff-reset/
+/aquahalt-fixture-fit-and-what-it-does-not-cover/
 /automatic-shutoff-vacation-home/
 /automatic-water-leak-detection-and-shut-off-system/
 /battery-powered-water-leak-detector-vs-smart-home-systems/
@@ -123,6 +125,7 @@
 /stop-the-drip-before-it-drowns-you-smart-ways-to-prevent-water-damage-at-home/
 /stop-the-drip-how-to-detect-water-leaks-before-they-drain-your-budget/
 /stopping-water-damage-before-it-starts/
+/test-toilet-shut-off-valve-before-buying-leak-protection/
 /the-cost-of-silence-how-early-leak-detection-can-save-thousands/
 /the-hidden-cost-of-water-leaks-and-how-aquahalt-can-save-you-big/
 /the-hidden-costs-of-small-leaks-in-commercial-facilitieswhy-you-need-real-time-monitoring/
