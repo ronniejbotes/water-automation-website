@@ -8,6 +8,16 @@ node_modules/
 
 # Local scratch
 .probe/
+
+# Throwaway probe scripts. Anything named _foo.mjs at the repo root or in tools/
+# is a one-off written to answer a single question — by a person or by an agent —
+# and is not part of the build. Ignored so a `git add -A` during a review cannot
+# sweep a pile of them into a commit, which is exactly what happened once.
+_*.mjs
+_*.json
+_*.txt
+_*.png
+tools/_*
 shots/
 
 # OS / editor noise
