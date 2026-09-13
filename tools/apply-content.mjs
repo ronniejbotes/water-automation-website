@@ -33,7 +33,7 @@
  *   node tools/apply-content.mjs --dry     # report what would change
  */
 import { readFile, writeFile } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { CONTENT } from './content.mjs'
@@ -44,6 +44,21 @@ const DRY = process.argv.includes('--dry')
 
 const open = (id) => `<!-- wa:content:${id} -->`
 const close = (id) => `<!-- /wa:content:${id} -->`
+
+// A block's markup can live inline as `html`, or in its own file as `htmlFile`
+// (relative to tools/). Anything longer than a few lines belongs in a file —
+// a spec table is easier to edit as HTML than as a JS string, and it keeps
+// content.mjs readable as a list of decisions rather than a wall of markup.
+const BLOCK_DIR = resolve(dirname(fileURLToPath(import.meta.url)))
+const markupFor = (block) => {
+  if (block.html != null) return block.html
+  if (block.htmlFile) {
+    const p = join(BLOCK_DIR, block.htmlFile)
+    if (!existsSync(p)) throw new Error(`${block.id}: htmlFile not found — ${block.htmlFile}`)
+    return readFileSync(p, 'utf8').trimEnd()
+  }
+  throw new Error(`${block.id}: needs either html or htmlFile`)
+}
 
 const edits = new Map() // absolute path -> new content
 const report = []
@@ -61,6 +76,7 @@ for (const block of CONTENT) {
 
   let applied = 0
   let already = 0
+  let resynced = 0
   const problems = []
 
   for (const rel of files) {
@@ -73,8 +89,27 @@ for (const block of CONTENT) {
     let html = await read(abs)
 
     if (block.kind === 'insert') {
+      // Already placed? Re-sync it rather than skipping, so editing the block's
+      // HTML and re-running actually updates the page. Skipping instead would
+      // make the markers a one-way door: the first run wins and every later
+      // edit is silently ignored, which is a worse failure than a noisy one
+      // because the file on disk looks correct.
       if (html.includes(open(block.id))) {
-        already++
+        const a = html.indexOf(open(block.id))
+        const b = html.indexOf(close(block.id))
+        if (b === -1) {
+          problems.push(`${rel}: opening marker present but closing marker missing`)
+          continue
+        }
+        const current = html.slice(a + open(block.id).length, b)
+        const desired = `\n${markupFor(block)}\n`
+        if (current === desired) {
+          already++
+          continue
+        }
+        html = html.slice(0, a + open(block.id).length) + desired + html.slice(b)
+        edits.set(abs, html)
+        resynced++
         continue
       }
       const hits = html.split(block.anchor).length - 1
@@ -82,7 +117,7 @@ for (const block of CONTENT) {
         problems.push(`${rel}: anchor matched ${hits} time(s), needs exactly 1`)
         continue
       }
-      const wrapped = `${open(block.id)}\n${block.html}\n${close(block.id)}\n`
+      const wrapped = `${open(block.id)}\n${markupFor(block)}\n${close(block.id)}\n`
       html =
         block.position === 'after'
           ? html.replace(block.anchor, block.anchor + '\n' + wrapped)
@@ -108,7 +143,8 @@ for (const block of CONTENT) {
 
   const expected = block.expect ?? files.length
   const ok =
-    problems.length === 0 && (applied === expected || (applied === 0 && already === files.length))
+    problems.length === 0 &&
+    (applied === expected || applied + already + resynced === files.length)
 
   if (!ok) failed = true
   report.push({
@@ -116,6 +152,7 @@ for (const block of CONTENT) {
     ok,
     detail:
       `${block.kind} across ${files.length} file(s): applied ${applied}, expected ${expected}` +
+      (resynced ? `, re-synced ${resynced}` : '') +
       (already ? `, already in place ${already}` : ''),
     problems,
   })

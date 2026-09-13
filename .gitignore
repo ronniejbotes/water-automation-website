@@ -20,4 +20,6 @@ Desktop.ini
 .compare.json
 .compare-mobile.json
 .probe.json
+.mobile-audit-*.json
+.mobile-audit-*.log
 _redirects.observed
