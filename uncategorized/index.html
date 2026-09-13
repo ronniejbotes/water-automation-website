@@ -299,8 +299,14 @@ body, h1, h2, h3, h4, h5, h6, p, a, span, .woocommerce * {
   }
 
   /* Both floating controls sit above the end of the document, so the last
-     content on every page was unreachable underneath them. */
-  body { padding-bottom: 84px !important; }
+     content on every page was unreachable underneath them.
+
+     The space goes INSIDE the footer's dark panel, not on <body>. Padding the
+     body adds the gap below the footer instead, and since <footer> is
+     transparent and <body> is white, that leaves an 84px white strip under a
+     dark footer — which looks exactly like a bug. This element paints the
+     rgb(74,74,74) panel and is present on all 183 pages. */
+  footer .elementor-element-900980d { padding-bottom: 84px !important; }
 }
 
 /* ---- Tablet and desktop -------------------------------------------------- */
