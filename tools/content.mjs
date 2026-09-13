@@ -389,4 +389,93 @@ const BRAND = [
   },
 ]
 
-export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND]
+// ---------------------------------------------------------------------------
+// Images: stop the jumping, the pop-in and the stretch
+// ---------------------------------------------------------------------------
+//
+// The client's words were "image stretching", "stretched imagery, awkward
+// positioning", and that the site "looked unfinished". Measured with
+// tools/image-audit.mjs across all 183 pages, three separate faults account for
+// most of that impression, and all three are in markup rather than in the
+// pictures themselves.
+//
+// 1. The header logo and the TIME badge both carry loading="lazy" while sitting
+//    ABOVE THE FOLD. A lazily-loaded header is a header that arrives late and
+//    pops in, on every page, on every visit.
+// 2. Neither carries width/height, and neither has a CSS aspect-ratio, so the
+//    browser cannot reserve space for them. The header reflows as they load.
+//    That is the jumping-about, and it is the single most common cause of a site
+//    feeling unfinished. 1,151 instances of this across 181 pages, and these two
+//    images are 1,086 of them.
+// 3. Their alt text is the filename — "water-automation-logo-final" and
+//    "2023_-_Best_Inventions_Seal_-_RGB_-_REV". A screen reader announces that
+//    verbatim, and it is the brand name rendered as a file on disk.
+//
+// The width/height values are the files' true intrinsic dimensions, so they give
+// the browser the correct aspect ratio to reserve. CSS still governs the painted
+// size — these attributes change nothing about how large either image appears.
+
+const IMAGES = [
+  {
+    id: 'img-header-logo',
+    kind: 'replace',
+    allHtml: true,
+    from:
+      '<img src="/wp-content/uploads/2025/02/water-automation-logo-final.png" title="water-automation-logo-final" alt="water-automation-logo-final" loading="lazy" />',
+    to:
+      '<img src="/wp-content/uploads/2025/02/water-automation-logo-final.png" title="Water Automation" alt="Water Automation" width="3349" height="1100" fetchpriority="high" decoding="async" />',
+    expect: 370,
+    why: `The header logo, on 185 pages. Was lazy-loaded despite being the first
+      thing on the page, had no dimensions so the header reflowed around it, and
+      announced itself to a screen reader as "water-automation-logo-final".`,
+  },
+  {
+    id: 'img-time-badge',
+    kind: 'replace',
+    allHtml: true,
+    from:
+      '<img src="/wp-content/uploads/2025/01/2023_-_Best_Inventions_Seal_-_RGB_-_REV.png" title="2023_-_Best_Inventions_Seal_-_RGB_-_REV" alt="2023_-_Best_Inventions_Seal_-_RGB_-_REV" loading="lazy" />',
+    to:
+      '<img src="/wp-content/uploads/2025/01/2023_-_Best_Inventions_Seal_-_RGB_-_REV.png" title="TIME Best Inventions 2023" alt="TIME Best Inventions 2023 award seal" width="1820" height="2560" decoding="async" />',
+    expect: 370,
+    why: `The TIME Best Inventions seal in the header, on 185 pages. This is the
+      strongest verifiable credential the business has, and its alt text was a
+      filename — so to a screen reader, and to anything reading alt text as a
+      signal, the award was invisible.`,
+  },
+]
+
+// /checkout/ is captured by tools/capture-checkout.mjs, which serialises a live
+// DOM rather than saving the raw response — the page only renders with a filled
+// cart. A serialised DOM writes void elements without the trailing slash, so the
+// same two <img> tags appear there in a form the blocks above do not match.
+// Same fix, different spelling of the same markup.
+const CHECKOUT_IMAGES = [
+  {
+    id: 'img-header-logo-checkout',
+    kind: 'replace',
+    files: ['checkout/index.html'],
+    from:
+      '<img src="/wp-content/uploads/2025/02/water-automation-logo-final.png" title="water-automation-logo-final" alt="water-automation-logo-final" loading="lazy">',
+    to:
+      '<img src="/wp-content/uploads/2025/02/water-automation-logo-final.png" title="Water Automation" alt="Water Automation" width="3349" height="1100" fetchpriority="high" decoding="async">',
+    expect: 3,
+    why: `The checkout page's copy of the header logo. Worth having right: this is
+      the page where a buyer is entering card details, and a header that arrives
+      late or shifts the layout is exactly where hesitation costs an order.`,
+  },
+  {
+    id: 'img-time-badge-checkout',
+    kind: 'replace',
+    files: ['checkout/index.html'],
+    from:
+      '<img src="/wp-content/uploads/2025/01/2023_-_Best_Inventions_Seal_-_RGB_-_REV.png" title="2023_-_Best_Inventions_Seal_-_RGB_-_REV" alt="2023_-_Best_Inventions_Seal_-_RGB_-_REV" loading="lazy">',
+    to:
+      '<img src="/wp-content/uploads/2025/01/2023_-_Best_Inventions_Seal_-_RGB_-_REV.png" title="TIME Best Inventions 2023" alt="TIME Best Inventions 2023 award seal" width="1820" height="2560" decoding="async">',
+    expect: 4,
+    why: `The same seal on the checkout page — the one page where a trust signal
+      most needs to render immediately and be described properly.`,
+  },
+]
+
+export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES]

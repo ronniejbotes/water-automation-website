@@ -350,6 +350,24 @@ body, h1, h2, h3, h4, h5, h6, p, a, span, .woocommerce * {
   }
 }
 
+/* ---- Stretched product imagery ------------------------------------------ */
+/*
+ * Measured with tools/image-audit.mjs: one product photo is painted into a box
+ * that does not match its own proportions, so it is drawn 18% taller than it
+ * really is. It appears on /buy-now/, /buy-now-lander/ and /builder-lander/.
+ *
+ * object-fit:contain makes the picture fit the box without distorting — it
+ * letterboxes instead of stretching. That is the correct rendering of a photo
+ * whose aspect ratio does not match its container.
+ *
+ * This is a holding fix. The underlying file is only 412px wide and is being
+ * painted into a 640px box, so it is also soft. It wants replacing with one of
+ * the newer product shots, not a CSS rule.
+ */
+img[src*="image_2025-01-30_114647677"] {
+  object-fit: contain !important;
+}
+
 /* ---- Motion ------------------------------------------------------------- */
 /* The launcher ships with a permanent pulse animation. Respect the OS setting. */
 @media (prefers-reduced-motion: reduce) {
@@ -377,13 +395,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 		<div class="elementor-element elementor-element-dfdbab8 e-con-full e-flex e-con e-child" data-id="dfdbab8" data-element_type="container" data-e-type="container">
 				<div class="elementor-element elementor-element-a64da26 elementor-widget elementor-widget-image" data-id="a64da26" data-element_type="widget" data-e-type="widget" data-widget_type="image.default">
 																<a href="/">
-							<img src="/wp-content/uploads/2025/02/water-automation-logo-final.png" title="water-automation-logo-final" alt="water-automation-logo-final" loading="lazy" />								</a>
+							<img src="/wp-content/uploads/2025/02/water-automation-logo-final.png" title="Water Automation" alt="Water Automation" width="3349" height="1100" fetchpriority="high" decoding="async" />								</a>
 															</div>
 				</div>
 		<div class="elementor-element elementor-element-e9cd4cc e-con-full e-flex e-con e-child" data-id="e9cd4cc" data-element_type="container" data-e-type="container">
 				<div class="elementor-element elementor-element-9a524fe elementor-hidden-desktop elementor-hidden-tablet elementor-widget elementor-widget-image" data-id="9a524fe" data-element_type="widget" data-e-type="widget" data-widget_type="image.default">
 																<a href="https://time.com/collection/best-inventions-2023/6324170/water-automation-aquahalt/" target="_blank">
-							<img src="/wp-content/uploads/2025/01/2023_-_Best_Inventions_Seal_-_RGB_-_REV.png" title="2023_-_Best_Inventions_Seal_-_RGB_-_REV" alt="2023_-_Best_Inventions_Seal_-_RGB_-_REV" loading="lazy" />								</a>
+							<img src="/wp-content/uploads/2025/01/2023_-_Best_Inventions_Seal_-_RGB_-_REV.png" title="TIME Best Inventions 2023" alt="TIME Best Inventions 2023 award seal" width="1820" height="2560" decoding="async" />								</a>
 															</div>
 				<div class="elementor-element elementor-element-20aef1c elementor-fixed elementor-hidden-desktop elementor-hidden-tablet toggle-icon--cart-medium elementor-menu-cart--items-indicator-bubble elementor-menu-cart--show-subtotal-yes elementor-menu-cart--cart-type-side-cart elementor-menu-cart--show-remove-button-yes elementor-widget elementor-widget-woocommerce-menu-cart" data-id="20aef1c" data-element_type="widget" data-e-type="widget" data-settings="{&quot;_position&quot;:&quot;fixed&quot;,&quot;cart_type&quot;:&quot;side-cart&quot;,&quot;open_cart&quot;:&quot;click&quot;,&quot;automatically_open_cart&quot;:&quot;no&quot;}" data-widget_type="woocommerce-menu-cart.default">
 							<div class="elementor-menu-cart__wrapper">
@@ -501,7 +519,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 								</div>
 				<div class="elementor-element elementor-element-6239299 elementor-widget elementor-widget-image" data-id="6239299" data-element_type="widget" data-e-type="widget" data-widget_type="image.default">
 																<a href="https://time.com/collection/best-inventions-2023/6324170/water-automation-aquahalt/" target="_blank">
-							<img src="/wp-content/uploads/2025/01/2023_-_Best_Inventions_Seal_-_RGB_-_REV.png" title="2023_-_Best_Inventions_Seal_-_RGB_-_REV" alt="2023_-_Best_Inventions_Seal_-_RGB_-_REV" loading="lazy" />								</a>
+							<img src="/wp-content/uploads/2025/01/2023_-_Best_Inventions_Seal_-_RGB_-_REV.png" title="TIME Best Inventions 2023" alt="TIME Best Inventions 2023 award seal" width="1820" height="2560" decoding="async" />								</a>
 															</div>
 				<div class="elementor-element elementor-element-dbae0af elementor-fixed toggle-icon--cart-medium elementor-menu-cart--items-indicator-bubble elementor-menu-cart--show-subtotal-yes elementor-menu-cart--cart-type-side-cart elementor-menu-cart--show-remove-button-yes elementor-widget elementor-widget-woocommerce-menu-cart" data-id="dbae0af" data-element_type="widget" data-e-type="widget" id="7000" data-settings="{&quot;_position&quot;:&quot;fixed&quot;,&quot;cart_type&quot;:&quot;side-cart&quot;,&quot;open_cart&quot;:&quot;click&quot;,&quot;automatically_open_cart&quot;:&quot;no&quot;}" data-widget_type="woocommerce-menu-cart.default">
 							<div class="elementor-menu-cart__wrapper">
@@ -806,7 +824,7 @@ document.getElementById('aqvc-close').addEventListener('click',function(){
 		<div class="elementor-element elementor-element-69e6e34 e-con-full e-flex e-con e-child" data-id="69e6e34" data-element_type="container" data-e-type="container">
 		<div class="elementor-element elementor-element-581aacd e-con-full e-flex e-con e-child" data-id="581aacd" data-element_type="container" data-e-type="container">
 				<div class="elementor-element elementor-element-6babc0b elementor-widget elementor-widget-image" data-id="6babc0b" data-element_type="widget" data-e-type="widget" data-widget_type="image.default">
-															<img src="/wp-content/uploads/2025/02/water-automation-logo-final.png" title="water-automation-logo-final" alt="water-automation-logo-final" loading="lazy" />															</div>
+															<img src="/wp-content/uploads/2025/02/water-automation-logo-final.png" title="Water Automation" alt="Water Automation" width="3349" height="1100" fetchpriority="high" decoding="async" />															</div>
 				<div class="elementor-element elementor-element-eb83f9f elementor-mobile-align-center elementor-widget elementor-widget-button" data-id="eb83f9f" data-element_type="widget" data-e-type="widget" data-widget_type="button.default">
 										<a class="elementor-button elementor-button-link elementor-size-sm" href="/buy-now/">
 						<span class="elementor-button-content-wrapper">
