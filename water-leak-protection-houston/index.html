@@ -392,6 +392,98 @@ img[src*="image_2025-01-30_114647677"] {
 }
 </style>
 <!-- /wa:content:overlay-hygiene -->
+<!-- wa:content:comparison-table-mobile -->
+<style id="wa-comparison-table-mobile">
+/*
+ * The aquaHALT / Flo by Moen / Phyn Plus comparison table, on a phone.
+ *
+ * The page ships this rule:
+ *
+ *   @media(max-width:680px){ .aqt-th-f,.aqt-td-f{display:none} .aqt-wrap table{min-width:380px} }
+ *
+ * which hides the Feature column — the labels — to try to fit four columns onto
+ * a phone. Two things go wrong. The labels are what the row MEANS, so without
+ * them a row reads "Yes — fixture level | No — mainline only | No — mainline
+ * only" with no question attached; eleven rows of that is a wall of answers to
+ * nothing. And it still does not fit: dropping the column bought about 22% of
+ * width and the third column is left clipped mid-word, so "Yes — 30-day setup"
+ * renders as "Yes — 3 / day setup", which misstates a competitor's figure.
+ *
+ * Below 680px the table becomes one card per feature instead: the label is the
+ * card's heading, and each of the three products is a labelled line inside it.
+ * Nothing is hidden, nothing is clipped, and there is no sideways scroll to
+ * discover.
+ *
+ * The product labels come from ::before on the cells rather than from markup,
+ * because the markup is captured and regenerated — a CSS label survives a
+ * rebuild, an edited <td> does not. Cell order in every row is
+ * Feature, aquaHALT, Flo by Moen, Phyn Plus, which is what the nth-child
+ * selectors rely on.
+ */
+@media (max-width: 680px) {
+
+  /* the wrapper no longer needs to scroll, because nothing overflows now */
+  .aqt-wrap {
+    overflow-x: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .aqt-wrap table {
+    display: block !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* the column headings are replaced by the per-cell labels below */
+  .aqt-wrap thead { display: none !important; }
+  .aqt-wrap tbody { display: block !important; }
+
+  /* one card per feature */
+  .aqt-wrap tbody tr {
+    display: block !important;
+    margin: 0 0 12px !important;
+    border: 1px solid #DCE8F5 !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+  }
+
+  .aqt-wrap tbody td {
+    display: flex !important;
+    width: auto !important;
+    gap: 8px;
+    align-items: baseline;
+    padding: 9px 12px !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+  }
+
+  /* the label, restored, as the card heading */
+  .aqt-wrap tbody td.aqt-td-f {
+    display: block !important;
+    background: #1A2F50 !important;
+    color: #fff !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+  }
+
+  /* say which product each line is, since the column headings are gone */
+  .aqt-wrap tbody td.aqt-td-a::before,
+  .aqt-wrap tbody td.aqt-td-c::before {
+    flex: 0 0 94px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .aqt-wrap tbody td.aqt-td-a::before { content: "aquaHALT"; color: #0A3D7A; }
+  .aqt-wrap tbody tr > td.aqt-td-c:nth-child(3)::before { content: "Flo by Moen"; color: #8A9BAB; }
+  .aqt-wrap tbody tr > td.aqt-td-c:nth-child(4)::before { content: "Phyn Plus"; color: #8A9BAB; }
+
+  /* keep the icon on the same baseline as the text it qualifies */
+  .aqt-wrap tbody td .aqt-icon { flex: 0 0 auto; margin-right: 0; }
+}
+</style>
+<!-- /wa:content:comparison-table-mobile -->
 </head>
 <body class="wp-singular page-template page-template-elementor_header_footer page page-id-3883 wp-custom-logo wp-embed-responsive wp-theme-hello-elementor theme-hello-elementor woocommerce-no-js hello-elementor-default elementor-default elementor-template-full-width elementor-kit-6 elementor-page elementor-page-3883">
 
@@ -1326,15 +1418,15 @@ Smart Leak Detection Technology
       <tr>
         <td class="aqt-td-f">Professional installation needed</td>
         <td class="aqt-td-a">
-          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F6B2A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           <span class="aqt-gy">No — 10 min DIY</span>
         </td>
         <td class="aqt-td-c">
-          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F6B2A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           <span class="aqt-rn">Yes — licensed plumber</span>
         </td>
         <td class="aqt-td-c">
-          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F6B2A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           <span class="aqt-rn">Yes — licensed plumber</span>
         </td>
       </tr>
@@ -1351,15 +1443,15 @@ Smart Leak Detection Technology
       <tr>
         <td class="aqt-td-f">Wi-Fi / app required</td>
         <td class="aqt-td-a">
-          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F6B2A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           <span class="aqt-gy">No — fully standalone</span>
         </td>
         <td class="aqt-td-c">
-          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F6B2A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           <span class="aqt-rn">Yes — app dependent</span>
         </td>
         <td class="aqt-td-c">
-          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1F6B2A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <svg class="aqt-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           <span class="aqt-rn">Yes — 30-day setup</span>
         </td>
       </tr>

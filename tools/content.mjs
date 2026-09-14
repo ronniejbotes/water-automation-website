@@ -478,4 +478,91 @@ const CHECKOUT_IMAGES = [
   },
 ]
 
-export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES]
+
+// ---------------------------------------------------------------------------
+// The competitor comparison table
+// ---------------------------------------------------------------------------
+//
+// This table appears on the homepage and all eight city pages, under the heading
+// "Why Property Professionals Choose aquaHALT Over Flo by Moen & Phyn". It is
+// comparative advertising naming two competitors, so it has to be right rather
+// than merely favourable.
+//
+// The icons contradicted the text in their own cells. The table's own colour
+// classes are unambiguous — .aqt-gy is green (#1F6B2A) and .aqt-rn is red
+// (#A32D2D) — and the text used them correctly throughout: aquaHALT green,
+// competitors red. But on two rows the SVG icon was the other way round, so a
+// reader skimming icons rather than reading cells got the opposite answer.
+//
+// Fixed here. The false "Source Shutdown" row is a separate change, because
+// correcting it needs sourced copy rather than an icon swap.
+
+const TABLE_ICONS = [
+  {
+    id: 'table-icons-installation',
+    kind: 'replace',
+    allHtml: true,
+    from:
+      "<tr>\r\n        <td class=\"aqt-td-f\">Professional installation needed</td>\r\n        <td class=\"aqt-td-a\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#A32D2D\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/></svg>\r\n          <span class=\"aqt-gy\">No — 10 min DIY</span>\r\n        </td>\r\n        <td class=\"aqt-td-c\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1F6B2A\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><polyline points=\"22 4 12 14.01 9 11.01\"/></svg>\r\n          <span class=\"aqt-rn\">Yes — licensed plumber</span>\r\n        </td>\r\n        <td class=\"aqt-td-c\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1F6B2A\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><polyline points=\"22 4 12 14.01 9 11.01\"/></svg>\r\n          <span class=\"aqt-rn\">Yes — licensed plumber</span>\r\n        </td>\r\n      </tr>",
+    to:
+      "<tr>\r\n        <td class=\"aqt-td-f\">Professional installation needed</td>\r\n        <td class=\"aqt-td-a\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1F6B2A\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><polyline points=\"22 4 12 14.01 9 11.01\"/></svg>\r\n          <span class=\"aqt-gy\">No — 10 min DIY</span>\r\n        </td>\r\n        <td class=\"aqt-td-c\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#A32D2D\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/></svg>\r\n          <span class=\"aqt-rn\">Yes — licensed plumber</span>\r\n        </td>\r\n        <td class=\"aqt-td-c\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#A32D2D\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/></svg>\r\n          <span class=\"aqt-rn\">Yes — licensed plumber</span>\r\n        </td>\r\n      </tr>",
+    expect: 9,
+    why: `The icon contradicted its own cell. aquaHALT's "No — 10 min DIY" carried a RED
+      CROSS while both competitors' "Yes — licensed plumber" carried a GREEN TICK, so
+      anyone skimming the icons read the table backwards — and the text colours in the
+      same cells already said the opposite (.aqt-gy is green, .aqt-rn is red). The icon
+      now follows whether the cell is good for the reader, not whether the word is
+      "yes" or "no".`,
+  },
+  {
+    id: 'table-icons-wifi',
+    kind: 'replace',
+    allHtml: true,
+    from:
+      "<tr>\r\n        <td class=\"aqt-td-f\">Wi-Fi / app required</td>\r\n        <td class=\"aqt-td-a\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#A32D2D\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/></svg>\r\n          <span class=\"aqt-gy\">No — fully standalone</span>\r\n        </td>\r\n        <td class=\"aqt-td-c\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1F6B2A\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><polyline points=\"22 4 12 14.01 9 11.01\"/></svg>\r\n          <span class=\"aqt-rn\">Yes — app dependent</span>\r\n        </td>\r\n        <td class=\"aqt-td-c\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1F6B2A\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><polyline points=\"22 4 12 14.01 9 11.01\"/></svg>\r\n          <span class=\"aqt-rn\">Yes — 30-day setup</span>\r\n        </td>\r\n      </tr>",
+    to:
+      "<tr>\r\n        <td class=\"aqt-td-f\">Wi-Fi / app required</td>\r\n        <td class=\"aqt-td-a\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1F6B2A\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><polyline points=\"22 4 12 14.01 9 11.01\"/></svg>\r\n          <span class=\"aqt-gy\">No — fully standalone</span>\r\n        </td>\r\n        <td class=\"aqt-td-c\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#A32D2D\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/></svg>\r\n          <span class=\"aqt-rn\">Yes — app dependent</span>\r\n        </td>\r\n        <td class=\"aqt-td-c\">\r\n          <svg class=\"aqt-icon\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#A32D2D\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/></svg>\r\n          <span class=\"aqt-rn\">Yes — 30-day setup</span>\r\n        </td>\r\n      </tr>",
+    expect: 9,
+    why: `Same inversion on the Wi-Fi row: "No — fully standalone" carried a red cross
+      and "Yes — app dependent" a green tick. Not needing an app is the selling
+      point, so it gets the tick. The Phyn cell's "30-day setup" text is a separate
+      problem — it is a figure Phyn does not publish — and is handled elsewhere.`,
+  },
+]
+
+
+// ---------------------------------------------------------------------------
+// The comparison table on a phone
+// ---------------------------------------------------------------------------
+
+const TABLE_MOBILE = [
+  {
+    id: 'comparison-table-mobile',
+    kind: 'insert',
+    files: [
+      'index.html',
+      'water-leak-protection-boston/index.html',
+      'water-leak-protection-chicago/index.html',
+      'water-leak-protection-dallas/index.html',
+      'water-leak-protection-fort-lauderdale/index.html',
+      'water-leak-protection-houston/index.html',
+      'water-leak-protection-miami/index.html',
+      'water-leak-protection-new-york/index.html',
+      'water-leak-protection-washington-dc/index.html',
+    ],
+    anchor: '</head>',
+    position: 'before',
+    htmlFile: 'content/comparison-table-mobile.html',
+    why: `The page hides the table's Feature column below 680px to fit four columns
+      onto a phone, which removes the labels — so eleven rows read as answers with
+      no questions — and it still does not fit, leaving the third column clipped
+      mid-word so "Yes - 30-day setup" renders as "Yes - 3 / day setup" and
+      misstates a competitor's figure.
+
+      Restacked into one card per feature instead: label as the heading, each
+      product a labelled line inside. Scoped to the nine pages that carry the
+      table rather than injected sitewide.`,
+  },
+]
+
+export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE]
