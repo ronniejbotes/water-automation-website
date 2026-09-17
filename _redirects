@@ -39,6 +39,20 @@
 /products/aquahalt   /product/aquahalt-2x/  301
 /products/aquahalt/  /product/aquahalt-2x/  301
 
+# Yoast answers /sitemap.xml with a 301 to the real index. This one is not a
+# convenience: /sitemap.xml is one of THREE sitemaps submitted in Search Console,
+# and Google fetched it on 17 September 2026. Without this rule that submission
+# goes from a working 301 to a 404 the moment DNS moves.
+#
+# Verified live on 17 September 2026, HEAD only:
+#   GET https://www.waterautomation.com/sitemap.xml
+#     -> 301, location: https://www.waterautomation.com/sitemap_index.xml
+#     -> x-redirect-by: Yoast SEO
+#   GET https://www.waterautomation.com/sitemap_index.xml -> 200 text/xml
+#
+# No trailing-slash variant: it is a file, and the live site does not answer one.
+/sitemap.xml   /sitemap_index.xml  301
+
 # NOT included, deliberately:
 #
 #   /checkout/ -> /cart/   This is a 302 that WooCommerce issues at request time
