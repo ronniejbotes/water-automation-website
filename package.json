@@ -17,6 +17,8 @@
     "verify": "node tools/verify.mjs",
     "linkcheck": "node tools/linkcheck.mjs",
     "forms": "node tools/form-inventory.mjs",
+    "forms:wire": "node tools/forms-wire.mjs",
+    "forms:wire:dry": "node tools/forms-wire.mjs --dry",
     "audit": "node tools/runtime-audit.mjs",
     "audit:fetch": "node tools/runtime-audit.mjs --fetch",
     "verify:live": "node tools/verify.mjs --live",

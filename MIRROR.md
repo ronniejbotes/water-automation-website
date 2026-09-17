@@ -350,12 +350,35 @@ none of it survives the move to static HTML without a replacement being wired up
 |---|---|---|
 | Add to cart, cart, checkout, payment | WooCommerce + Stripe | Pages render; nothing transacts |
 | My account, login, register, lost password | WordPress users | Forms render; nothing submits |
-| 23 Elementor Pro forms (contact, book a call, expo signup, demo, partner) | `admin-ajax.php` | Fields render; **submissions go nowhere** |
+| Elementor Pro enquiry forms — **31 instances, 10 distinct, on 30 pages** (contact, book a call, expo signup, demo, partner) | was `admin-ajax.php`; now `/_forms/submit.php`, **which needs a host that runs PHP** | **Wired.** See the note below the table |
 | Product search and catalogue filtering | WooCommerce queries | Not functional |
 | Affiliate tracking | affiliates plugin | Not functional |
 | Mini-cart contents | `?wc-ajax=get_refreshed_fragments` | Dropdown renders empty on every page |
 
-**One visible consequence of that last row.** A static host ignores query strings, so
+**The forms row, in full.** The count in this table used to read "23", which matched neither
+the number of form definitions (10) nor the number of instances (31). Both figures now come
+from `npm run forms`, which reads them off the pages.
+
+Elementor Pro's front-end JavaScript intercepted every submit: its form module binds to any
+widget whose wrapper says `data-widget_type="form.default"`, calls `preventDefault()`
+unconditionally, and posts by XHR to `elementorProFrontend.config.ajaxurl`, which every page
+here sets to `/wp-admin/admin-ajax.php`. `npm run forms:wire` renames that one attribute
+value, so the handler never binds and the browser posts the form itself — to
+`action="/_forms/submit.php"`, which the same tool generates. The reCAPTCHA v3 loader went
+with it: the secret key that verified those tokens belongs to the WordPress install, so the
+field would have been decoration.
+
+Verified in a browser against `tools/serve.mjs`, not read off the page: four of the ten forms
+filled in and submitted, each one `POST /_forms/submit.php` → `303` → `/thank-you/`. The
+before-and-after layout of every form is identical to the pixel, and the only field that
+changed is the `g-recaptcha-response` Elementor used to inject, replaced by the `wa_page`
+stamp that tells the handler which page the enquiry came from.
+
+**That handler is PHP.** On a pure-static host it is not executed and every form posts into
+nothing. The one-request check on cutover day: a `GET` of `/_forms/submit.php` must answer
+**405**, not hand back a file starting `<?php`.
+
+**One visible consequence of the mini-cart row.** A static host ignores query strings, so
 `GET /?wc-ajax=get_refreshed_fragments` resolves to `index.html`: WooCommerce's mini-cart
 script asks for 827 bytes of JSON and receives the entire 242 KB homepage. It fails to parse
 it and retries, which is why `/cart/` ends up with three Stripe controller iframes instead of

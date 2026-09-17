@@ -6,6 +6,10 @@
  * It exists so "does the copy behave like the original?" can be answered by
  * clicking through it, not by reading HTML.
  *
+ * It also answers /_forms/submit.php the way the real handler will, so the
+ * enquiry forms can be submitted and watched end to end without PHP. See
+ * handleForm below.
+ *
  *   node tools/serve.mjs            # http://localhost:4400
  *   PORT=5000 node tools/serve.mjs
  *   npm run serve:lan              # 0.0.0.0:4401 — reachable from a phone on
@@ -64,8 +68,78 @@ async function tryFiles(urlPath) {
   return null
 }
 
+/**
+ * The form handler, in dev.
+ *
+ * _forms/submit.php is PHP, and nothing here runs PHP. This answers the same
+ * path with the same contract — POST only, 303 to /thank-you/, a filled
+ * honeypot answered exactly like a success, a missing reply address refused —
+ * so the whole submit flow can be clicked through and watched in the network
+ * panel without a mail server. It prints what the real handler would have
+ * emailed instead of sending it.
+ *
+ * It is also what stops the dev server handing out the PHP source as a
+ * download to anyone who opens that URL, which is what a static file server
+ * does with a .php file.
+ */
+const FORM_ENDPOINT = '/_forms/submit.php'
+
+function readBody(req) {
+  return new Promise((ok, fail) => {
+    const parts = []
+    let size = 0
+    req.on('data', (c) => {
+      size += c.length
+      if (size > 2 * 1024 * 1024) { req.destroy(); fail(new Error('body too large')) }
+      parts.push(c)
+    })
+    req.on('end', () => ok(Buffer.concat(parts).toString('utf8')))
+    req.on('error', fail)
+  })
+}
+
+async function handleForm(req, res) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { Allow: 'POST', 'Content-Type': 'text/plain; charset=utf-8' })
+    return res.end('This address accepts form submissions only.\n')
+  }
+  const fields = new URLSearchParams(await readBody(req))
+  const get = (n) => (fields.get(`form_fields[${n}]`) || '').trim()
+
+  // Elementor hides its spam trap with an inline style rather than type=hidden,
+  // and calls it something different on each form, so anything that arrives
+  // filled and is not one of the fields a person can see is treated as one.
+  const visible = new Set(['name', 'email', 'tel', 'message', 'job_title', 'company', 'consent'])
+  for (const [k, v] of fields) {
+    const m = /^form_fields\[([^\]]+)\]$/.exec(k)
+    if (m && !visible.has(m[1]) && v.trim() !== '') {
+      console.log(`  [form] honeypot "${m[1]}" filled — answered as success, nothing sent`)
+      res.writeHead(303, { Location: '/thank-you/', 'Cache-Control': 'no-store' })
+      return res.end()
+    }
+  }
+
+  if (get('email') === '' && get('tel') === '') {
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' })
+    return res.end('We need a way to reply.\n')
+  }
+
+  console.log(`\n  [form] POST ${FORM_ENDPOINT}`)
+  console.log(`  [form]   form_id ${fields.get('form_id') || '(none)'}   page ${fields.get('wa_page') || '(none)'}   referer ${req.headers.referer || '(none)'}`)
+  for (const [k, v] of fields) {
+    const m = /^form_fields\[([^\]]+)\]$/.exec(k)
+    if (m && v.trim() !== '') console.log(`  [form]   ${m[1].padEnd(12)} ${v.replace(/\n/g, ' ')}`)
+  }
+  console.log(`  [form]   -> 303 /thank-you/  (the real handler would mail this)\n`)
+
+  res.writeHead(303, { Location: '/thank-you/', 'Cache-Control': 'no-store' })
+  return res.end()
+}
+
 createServer(async (req, res) => {
   const urlPath = req.url.split('?')[0]
+
+  if (urlPath === FORM_ENDPOINT) return handleForm(req, res)
 
   // Match a rule with or without its trailing slash, in both directions. The
   // live site answers /products/aquahalt and /products/aquahalt/ with the same

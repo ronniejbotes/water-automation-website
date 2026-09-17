@@ -50,6 +50,8 @@ npm run compare:mobile
 npm run functions   # drives the menus, carousels and accordions on both sites
 npm run textdiff /some-page/   # which text lines differ on one page
 npm run forms       # inventory every form: fields, required flags, which pages
+npm run forms:wire  # point every form at /_forms/submit.php and generate the handler
+npm run forms:wire:dry
 ```
 
 `compare`, `functions` and `textdiff` need `npm run serve` running in another terminal. All
@@ -78,22 +80,42 @@ npm run assets            # backfill what a browser never requests: srcset varia
                           # font weights, PDFs, video
 npm run mirror:checkout   # the checkout template, which only renders with a filled cart
 npm run fix               # re-apply the link corrections in tools/fixes.mjs
+npm run forms:wire        # re-wire the forms to /_forms/submit.php
 ```
 
-**`npm run fix` is not optional after a rebuild.** The capture writes the live site's markup
-verbatim, broken links and all, so skipping it silently reverts the two link fixes and the
-site goes back to linking two 404s from 23 places. It is idempotent, so running it when
-nothing needs fixing is free.
+**`npm run fix` and `npm run forms:wire` are not optional after a rebuild.** The capture
+writes the live site's markup verbatim, broken links and all, so skipping `fix` silently
+reverts the two link fixes and the site goes back to linking two 404s from 23 places, and
+skipping `forms:wire` hands every form back to Elementor's JavaScript and to an
+`admin-ajax.php` that is not there. Both are idempotent, so running them when nothing needs
+fixing is free. `forms:wire` checks its own counts and stops rather than half-applying if the
+capture has changed underneath it.
 
 ## Before cutover
 
-Two things must be wired up or the site loses money quietly:
+1. **The enquiry forms are wired now, and they need a host that runs PHP.**
 
-1. **The 23 Elementor forms submit to nothing.** They still say "thank you" — that part is
-   client-side — so a broken form looks identical to a working one. Every lead-capture page
-   is affected.
+   This section used to say "the 23 Elementor forms submit to nothing" and that they "still
+   say thank you… so a broken form looks identical to a working one". Both halves were wrong.
+   The count is **31 form instances, 10 distinct forms, across 30 pages** — 23 matches neither
+   figure. And submitted in a browser, a broken one did not say thank you: Elementor's handler
+   only renders the success message for a JSON response with `success: true`, so the 404 from
+   `admin-ajax.php` landed in the error branch and showed the visitor a red `error` with their
+   typing still in the fields.
+
+   `npm run forms:wire` fixes it, and is as not-optional after a rebuild as `npm run fix` is.
+   It renames the widget hook Elementor's JavaScript binds to, gives every form
+   `action="/_forms/submit.php"`, and generates that handler and the `/thank-you/` page it
+   redirects to. `tools/serve.mjs` answers the same path in dev, so the whole flow can be
+   submitted and watched locally without a mail server.
+
+   **The handler is PHP.** On Netlify, Cloudflare Pages, GitHub Pages or any other pure-static
+   host it is not executed and every form on the site posts into nothing. The cutover check is
+   one request: a `GET` of `/_forms/submit.php` must answer **405**. If it hands back a file
+   beginning `<?php`, the host is not running PHP and no form works.
+
 2. **WooCommerce does not transact.** Cart, checkout and Stripe render but do nothing.
    [COMMERCE.md](COMMERCE.md) sets out what replaces it, and what to export from WordPress
    before the install is switched off — that part is unrecoverable.
 
-Both are covered in MIRROR.md under *What a static copy cannot do*.
+Item 2 is covered in MIRROR.md under *What a static copy cannot do*.
