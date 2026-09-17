@@ -60,4 +60,53 @@ export const FIXES = [
       where it should have been an anchor. Same target as the nav, so this is a
       correction rather than a decision.`,
   },
+  {
+    id: 'case-studies-tel-typed-as-email',
+    from: '<div class="elementor-field-type-email elementor-field-group elementor-column elementor-field-group-tel elementor-col-100 elementor-field-required">',
+    to: '<div class="elementor-field-type-tel elementor-field-group elementor-column elementor-field-group-tel elementor-col-100 elementor-field-required">',
+    expect: 1,
+    why: `
+      The phone field on /case-studies/ is typed as an email field, and it is
+      required. So a visitor who types a phone number into the box labelled
+      "Tel", with the placeholder "+1 999 999 9999", is refused by their own
+      browser with "Please include an '@' in the email address". The only way to
+      submit that form is to put an email address into the phone box. This is
+      the one form of the ten that cannot be completed honestly.
+
+      It is a mis-set field in the Elementor form on the live site, not a
+      decision anyone made: the field is named tel, its group class is
+      elementor-field-group-tel, its label is "Tel" and its placeholder is a US
+      phone number. Only the type says email. The other nine forms all type the
+      same field tel.
+
+      Reproduced in a browser on both the pre-change build and this one, before
+      and after the forms were wired, so it is inherited and not something the
+      form work introduced: identical refusal, identical message, zero POSTs
+      either way.
+
+      This half of the fix is the wrapper class, which exists so Elementor's
+      per-widget CSS can target the field. Layout-neutral, checked rather than
+      assumed: post-1324.css puts .elementor-field-type-text,
+      .elementor-field-type-email and .elementor-field-type-tel in one rule for
+      this widget with the same two declarations, so both class names resolve to
+      the same grid-column and margin.`,
+  },
+  {
+    id: 'case-studies-tel-input-type',
+    from: '<input size="1" type="email" name="form_fields[tel]" id="form-field-tel" class="elementor-field elementor-size-md  elementor-field-textual" placeholder="+1 999 999 9999" required="required">',
+    to: '<input size="1" type="tel" name="form_fields[tel]" id="form-field-tel" class="elementor-field elementor-size-md  elementor-field-textual" placeholder="+1 999 999 9999" required="required" pattern="[0-9()#&amp;+*-=.]+" title="Only numbers and phone characters (#, -, *, etc) are accepted.">',
+    expect: 1,
+    why: `
+      The other half of case-studies-tel-typed-as-email: the input itself.
+
+      type="tel" rather than type="email", so the browser stops demanding an @
+      in a phone number and a phone keypad comes up on a mobile. The pattern and
+      title are not invented — they are copied character for character from the
+      tel field on the other nine forms in this build, so this field now
+      validates exactly as every other phone field on the site does.
+
+      The field stays required, because it is required on the live site and
+      nobody here decided otherwise. What changes is that it can now be
+      satisfied.`,
+  },
 ]

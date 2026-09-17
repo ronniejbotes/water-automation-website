@@ -729,10 +729,10 @@ document.getElementById('aqvc-close').addEventListener('click',function(){
 								E-mail							</label>
 														<input size="1" type="email" name="form_fields[email]" id="form-field-email" class="elementor-field elementor-size-md  elementor-field-textual" placeholder="E-mail" required="required">
 											</div>
-								<div class="elementor-field-type-email elementor-field-group elementor-column elementor-field-group-tel elementor-col-100 elementor-field-required">
+								<div class="elementor-field-type-tel elementor-field-group elementor-column elementor-field-group-tel elementor-col-100 elementor-field-required">
 												<label for="form-field-tel" class="elementor-field-label elementor-screen-only">
 								Tel							</label>
-														<input size="1" type="email" name="form_fields[tel]" id="form-field-tel" class="elementor-field elementor-size-md  elementor-field-textual" placeholder="+1 999 999 9999" required="required">
+														<input size="1" type="tel" name="form_fields[tel]" id="form-field-tel" class="elementor-field elementor-size-md  elementor-field-textual" placeholder="+1 999 999 9999" required="required" pattern="[0-9()#&amp;+*-=.]+" title="Only numbers and phone characters (#, -, *, etc) are accepted.">
 											</div>
 								<div class="elementor-field-type-textarea elementor-field-group elementor-column elementor-field-group-message elementor-col-50">
 												<label for="form-field-message" class="elementor-field-label elementor-screen-only">
