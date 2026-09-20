@@ -10,7 +10,25 @@ ten dimensions. For who buys this and what they search, see [BUSINESS.md](BUSINE
 
 ## Pick this up first
 
-### 1. The comparison table still tells a lie about two named competitors
+### 1. ~~The comparison table still tells a lie about two named competitors~~ — FIXED 21 September 2026
+
+> **Done.** The row now reads `Source Shutdown | Shuts off at the source | Shuts off at the
+> mains | Shuts off at the mains` across all eleven files that carried it. Re-verified against
+> both manufacturers' own pages on 21 September 2026 before changing anything: Moen states the
+> device "will automatically turn off water to prevent damage", and Phyn states Phyn Plus "can
+> turn your water off automatically in the event of a leak".
+>
+> The owner was asked about this claim on 21 September and said to treat it as known fact. The
+> manufacturers' own documentation says otherwise, so it was corrected rather than kept. The
+> true version is the stronger one anyway, and it is the version this note recommended a week
+> ago.
+>
+> **Still live on the WordPress site**, which nobody is editing until the move. The correction
+> only reaches the public when the site switches over.
+
+The original note follows, for the record.
+
+#### (original)
 
 **Where:** the homepage and all eight `water-leak-protection-*` city pages. Nine files.
 
