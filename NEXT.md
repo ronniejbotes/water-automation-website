@@ -269,3 +269,52 @@ Two things worth knowing because they contradict what this repo used to say:
   ICE files carry a stale 2020 text layer beneath vector-outlined visible text, so
   extraction returns wording that is not on the printed page. Two separate review passes
   reached false conclusions from it.
+
+---
+
+## Comparison table — sources, checked 21 September 2026
+
+Every claim about a competitor in the homepage table was checked against that
+manufacturer's own pages on 21 September 2026. If any of it is ever challenged,
+this is where the answer is.
+
+**Flo by Moen** — shop.moen.com/products/flo-smart-water-monitor-and-shutoff
+
+- Shuts off automatically: *"With FloSense Technology, the device learns your
+  home's water usage patterns to identify abnormalities like running water or
+  small leaks and will automatically turn off water to prevent damage."*
+- Learns first: same sentence — the shutoff follows the learning.
+- Mains power: requires *"an AC power outlet within 10 feet of the device"*, plus
+  2.4GHz Wi-Fi.
+- Installed in line with the water line, which is what makes it a plumber's job.
+- Price: **$623.99** on Moen's own shop.
+
+**Phyn Plus** — helpcenter.phyn.com/help/what-is-auto-shutoff-and-how-does-it-work
+
+- Shuts off automatically: *"With Phyn Plus' built-in shutoff valve ... Phyn Plus
+  can turn your water off automatically in the event of a leak."*
+- Off by default at first: *"Auto Shutoff is disabled by default while Phyn learns
+  your home's water usage patterns ... After this initial learning period, which
+  is different for every home, it will unlock the ability to turn off your water
+  automatically."*
+- Price: **$579.99** on Phyn's own shop.
+
+### Why the table says what it says
+
+The old table claimed both products "notify you only". That was false, and this
+site's own blog refuted it two clicks away. The version now live in the repo
+makes a stronger case without that risk:
+
+- They cut the **whole property's water**; aquaHALT stops the one leaking fixture.
+  In a block of flats that difference is the entire argument.
+- They **learn first**; Phyn's auto shut-off is switched off until it does.
+  aquaHALT works the moment it is fitted.
+- They need **a plumber, mains power and Wi-Fi**. aquaHALT needs two AA batteries.
+- They cost **$623.99 and $579.99 before installation**, per property. aquaHALT is
+  $157.99 per fixture.
+
+None of that requires pretending a competitor's product cannot do something it
+plainly can — and every line of it can be produced on demand.
+
+**If these are updated:** re-check the two prices and the Phyn learning-period
+wording, since both can change without notice.
