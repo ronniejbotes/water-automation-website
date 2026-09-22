@@ -21,6 +21,10 @@ Everything else is exactly as captured.
   copy cannot do.
 - **[_redirects](_redirects)** — the four redirects the live site already answers. Nothing
   here is new; they are carried across so the URLs that work today keep working.
+- **[.htaccess](.htaccess)** — what production actually reads. Hostinger (LiteSpeed) ignores
+  `_redirects`, so the same redirects live here too, along with the rules that keep this
+  repo's documents and tooling from being served, and the bare domain's 301 to www. Change
+  a redirect in both files.
 - **[routes.txt](routes.txt)** — the 186 URLs that make up the site.
 - **[COMMERCE.md](COMMERCE.md)** — the plan for decommissioning WordPress entirely: what the
   shop actually is (5 simple products, $13/item flat shipping, state-rate tax, Stripe), what

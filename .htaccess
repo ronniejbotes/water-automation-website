@@ -1,0 +1,180 @@
+# .htaccess for the static waterautomation.com on Hostinger (LiteSpeed).
+#
+# Hostinger reads this file and ignores _redirects, which is Netlify/Cloudflare
+# Pages syntax. Keep section 3 in step with _redirects: tools/serve.mjs replays
+# _redirects locally, and production answers from here.
+#
+# Written 22 Sep 2026. Everything here is plain mod_rewrite plus one
+# ErrorDocument, because those are the parts of .htaccess LiteSpeed documents
+# as following Apache's spec. No Redirect/RedirectMatch (mod_alias) is used, so
+# there is no question of which module runs first. No lookaheads, no [END],
+# no RewriteBase, and no %{HTTPS} test anywhere (see section 4 for why).
+#
+# Order matters and is deliberate:
+#   1. Hide internal files (404)            - both hosts
+#   2. Retire WordPress endpoints (410)     - both hosts
+#   3. The redirects from _redirects (301)  - both hosts, straight to www
+#   4. Apex -> www (301, GET/HEAD only)
+#
+# LiteSpeed stops ALL rewriting at the first [L] that matches (Apache only
+# stops the current pass), so every rule below is written to be complete on
+# its own and never relies on a second pass.
+#
+# Tested on Apache 2.4 only (no LiteSpeed was available to test on). The one
+# construct not confirmed in LiteSpeed's own docs is [R=404]. After deploying,
+# run the live check; if a blocked path (e.g. /SITE-REVIEW.md) does not answer
+# 404, change every "R=404,L" to "F,L" (403) -- that variant is also tested.
+
+# A real 404 status with the site's own page, instead of Hostinger's generic
+# "This Page Does Not Exist" page (which also loads Hostinger's own Google
+# Analytics tags). 404.html uses root-relative asset paths, so it renders at
+# any depth.
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# ---------------------------------------------------------------------------
+# 1. Internal files: 404, on both hosts, so nothing hints that they exist.
+#    The repo root is the web root, so everything the repo carries for the
+#    people building the site is otherwise downloadable.
+# ---------------------------------------------------------------------------
+
+# Header splitting: a CR or LF smuggled into the path as %0D/%0A must never
+# reach the Location header of the apex redirect in section 4. Refused
+# outright, before anything else can echo the path back.
+RewriteCond %{THE_REQUEST} %0[ad] [NC]
+RewriteRule ^ - [F,L]
+
+# The same internal files matched on the path the server resolved them to,
+# not on the URL as typed. LiteSpeed decodes %2F and collapses "/x/../"
+# before it looks for the file, so /x/..%2f_redirects, //package.json and
+# /%2fpackage.json all reached the file on the live site while every
+# URL-anchored rule below would have missed them. %{REQUEST_FILENAME} is the
+# file itself, however the URL spelled it.
+RewriteCond %{REQUEST_FILENAME} (\.(md|markdown|mjs)|/_redirects|/package(-lock)?\.json|/routes\.txt|/tools(/.*)?)$ [NC]
+RewriteRule ^ - [R=404,L]
+
+# Anything whose path starts with "_" at the root: _redirects, _raw/,
+# _headers, the gitignored _*.mjs/_*.json/_*.txt/_*.png probe files, and every
+# path under _forms/ -- except the one file the enquiry forms post to.
+RewriteCond %{REQUEST_URI} !^/_forms/submit\.php$
+RewriteRule ^_ - [R=404,L]
+
+# Dot-files and dot-directories at any depth (.git/, .gitignore,
+# .gitattributes, .nojekyll, .env, .DS_Store, .probe/ ...), except
+# /.well-known/, which Let's Encrypt renewals and similar checks need.
+# Hostinger 403s some of these at server level on the apex, but through www
+# /.gitignore and /.gitattributes were served with a 200, so this rule is the
+# one that actually closes them.
+RewriteCond %{REQUEST_URI} !^/\.well-known/
+RewriteRule (^|/)\. - [R=404,L]
+
+# Build tooling and its dependencies.
+RewriteRule ^(tools|node_modules|shots)(/|$) - [R=404,L]
+
+# Project documents and scripts, wherever they sit: BUSINESS.md, NEXT.md,
+# SITE-REVIEW.md, tools/*.mjs, and anything like them added later.
+RewriteRule \.(md|markdown|mjs|cjs|ts|map|log|sh|bak|orig|swp)$ - [NC,R=404,L]
+
+# Root files that describe the build rather than the site.
+RewriteRule ^(package\.json|package-lock\.json|routes\.txt)$ - [NC,R=404,L]
+
+# The form handler is the only PHP on this site; no other .php should run.
+RewriteCond %{REQUEST_URI} !^/_forms/submit\.php$
+RewriteCond %{REQUEST_URI} !^/(wp-login|xmlrpc|wp-cron|wp-signup|wp-register|wp-trackback|wp-comments-post|wp-links-opml|wp-config)\.php$
+RewriteCond %{REQUEST_URI} !^/wp-admin/
+RewriteRule \.php$ - [NC,R=404,L]
+
+# Directories with no index page (/wp-content/, /product/, /blog/page/ ...):
+# the site's 404 instead of Hostinger's bare "403 Forbidden", which confirms
+# the directory exists. /wp-admin/ is left to the 410 below.
+RewriteCond %{REQUEST_URI} !^/wp-admin/?$
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteCond %{REQUEST_FILENAME}/index.html !-f
+RewriteRule ^ - [R=404,L]
+
+# ---------------------------------------------------------------------------
+# 2. WordPress endpoints that no longer exist: 410 Gone, with the server's
+#    tiny default body rather than the 84 KB 404 page, because these are hit
+#    by bots far more than by people.
+# ---------------------------------------------------------------------------
+
+# Login, XML-RPC, cron, signup: the brute-force and pingback targets.
+RewriteRule ^(wp-login|xmlrpc|wp-cron|wp-signup|wp-register|wp-trackback|wp-comments-post|wp-links-opml|wp-config)\.php$ - [G,L]
+
+# The admin area itself (/wp-admin/, /wp-admin/admin-ajax.php, ...). Only the
+# directory index and PHP files: /wp-admin/js/password-strength-meter.min.js
+# is a real asset the my-account page loads, so it must keep working.
+RewriteRule ^wp-admin/?$ - [G,L]
+RewriteRule ^wp-admin/.*\.php$ - [G,L]
+
+# The REST API, both spellings.
+RewriteRule ^wp-json(/|$) - [G,L]
+RewriteCond %{QUERY_STRING} (^|&)rest_route= [NC]
+RewriteRule ^ - [G,L]
+
+# RSS feeds: /feed/, /comments/feed/, /<post>/feed/, /category/x/feed/ and
+# ?feed=rss2. The static site has no feed; 410 tells feed readers to stop.
+RewriteRule ^(.+/)?feed/?$ - [G,L]
+RewriteCond %{QUERY_STRING} (^|&)feed= [NC]
+RewriteRule ^ - [G,L]
+
+# WooCommerce's AJAX endpoint. Every page still POSTs
+# /?wc-ajax=get_refreshed_fragments on load, and today it gets the entire
+# 252 KB homepage back (a static host ignores the query string), which the
+# script cannot parse anyway. A 410 lands in the same error branch for a few
+# hundred bytes instead of a quarter of a megabyte per page view.
+RewriteCond %{QUERY_STRING} (^|&)wc-ajax= [NC]
+RewriteRule ^ - [G,L]
+
+# Three posts whose structured data (Yoast @id / url) names them by their
+# WordPress shortlink, /?p=<id>, which a static host answers with the
+# homepage. Send those three to the real post. The trailing "?" drops the
+# query string.
+RewriteCond %{QUERY_STRING} (^|&)p=3284(&|$)
+RewriteRule ^$ https://www.waterautomation.com/how-much-water-the-toilet-uses/? [R=301,L]
+RewriteCond %{QUERY_STRING} (^|&)p=3294(&|$)
+RewriteRule ^$ https://www.waterautomation.com/water-sensors-for-insurance/? [R=301,L]
+RewriteCond %{QUERY_STRING} (^|&)p=3296(&|$)
+RewriteRule ^$ https://www.waterautomation.com/why-is-my-toilet-making-noise-when-not-in-use/? [R=301,L]
+
+# ---------------------------------------------------------------------------
+# 3. The redirects in _redirects, which Hostinger does not read. Same source
+#    forms (with and without the trailing slash where _redirects lists both),
+#    same targets, 301. Targets are absolute www URLs so a hit on the apex
+#    host is one hop, not two. The visitor's query string is kept (Apache's
+#    default when the target has no "?").
+# ---------------------------------------------------------------------------
+RewriteRule ^2025/11/05/top-10-hidden-plumbing-lines-that-cause-water-damage-and-how-to-stop-leaks-before-they-start/?$ https://www.waterautomation.com/top-10-hidden-plumbing-lines-that-cause-water-damage-and-how-to-stop-leaks-before-they-start/ [R=301,L]
+RewriteRule ^contact/?$ https://www.waterautomation.com/contact-us/ [R=301,L]
+RewriteRule ^new-buy-now-lander/?$ https://www.waterautomation.com/buy-now/ [R=301,L]
+RewriteRule ^products/aquahalt/?$ https://www.waterautomation.com/product/aquahalt-2x/ [R=301,L]
+RewriteRule ^sitemap\.xml$ https://www.waterautomation.com/sitemap_index.xml [R=301,L]
+
+# ---------------------------------------------------------------------------
+# 4. waterautomation.com -> https://www.waterautomation.com, path and query
+#    kept.
+#
+#    Loop-safe by construction: it matches on the Host header only, and never
+#    looks at %{HTTPS}. www arrives through Cloudflare with Host
+#    www.waterautomation.com, so it can never match, whatever Cloudflare's SSL
+#    mode is (Flexible, Full or Full strict).
+#
+#    GET and HEAD only. A 301 turns a POST into a GET, which would drop an
+#    enquiry posted to https://waterautomation.com/_forms/submit.php (a page
+#    loaded on the apex before this rule existed, or a cached one). Any POST
+#    to the apex is served in place instead.
+#
+#    Not for /.well-known/ (certificate renewal for the apex certificate),
+#    and not for internal re-requests such as the ErrorDocument
+#    (REDIRECT_STATUS is set then), or a 404 on the apex would turn into a
+#    redirect to www/404.html.
+# ---------------------------------------------------------------------------
+RewriteCond %{HTTP_HOST} ^waterautomation\.com\.?(:[0-9]+)?$ [NC]
+RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+RewriteCond %{REQUEST_URI} !^/\.well-known/
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteRule ^(.*)$ https://www.waterautomation.com/$1 [R=301,L]
+
+</IfModule>
