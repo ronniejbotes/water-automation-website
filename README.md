@@ -97,26 +97,36 @@ capture has changed underneath it.
 
 ## Before cutover
 
-1. **The enquiry forms are wired now, and they need a host that runs PHP.**
+1. **The enquiry forms need a host that runs PHP, and one private file to deliver mail.**
 
-   This section used to say "the 23 Elementor forms submit to nothing" and that they "still
-   say thank you… so a broken form looks identical to a working one". Both halves were wrong.
-   The count is **31 form instances, 10 distinct forms, across 30 pages** — 23 matches neither
-   figure. And submitted in a browser, a broken one did not say thank you: Elementor's handler
-   only renders the success message for a JSON response with `success: true`, so the 404 from
-   `admin-ajax.php` landed in the error branch and showed the visitor a red `error` with their
-   typing still in the fields.
+   `npm run forms:wire` points all 31 form instances (10 distinct forms, 30 pages) at
+   `/_forms/submit.php` and generates that handler, `/_forms/forms.js` and `/thank-you/`.
+   With JavaScript a form answers in place, in Elementor's own markup and words ("Your
+   submission was successful." under the form), as the WordPress site did; without it the
+   browser posts and lands on `/thank-you/`. `tools/serve.mjs` answers the same way in dev,
+   without PHP or mail. Like `npm run fix`, it is not optional after a rebuild.
 
-   `npm run forms:wire` fixes it, and is as not-optional after a rebuild as `npm run fix` is.
-   It renames the widget hook Elementor's JavaScript binds to, gives every form
-   `action="/_forms/submit.php"`, and generates that handler and the `/thank-you/` page it
-   redirects to. `tools/serve.mjs` answers the same path in dev, so the whole flow can be
-   submitted and watched locally without a mail server.
+   The handler writes every enquiry to `private/submissions-YYYY-MM.jsonl` before it tries
+   any email, then sends through `_lib/wa.php`: Resend, then Microsoft Graph or SMTP if
+   configured, then PHP `mail()`. `mail()` alone is what the site went live with on 21
+   September, and it is why enquiries did not arrive: Hostinger's mail is unsigned for this
+   domain, SPF ends `-all` and DMARC is quarantine, so Microsoft 365 quarantined it.
 
-   **The handler is PHP.** On Netlify, Cloudflare Pages, GitHub Pages or any other pure-static
-   host it is not executed and every form on the site posts into nothing. The cutover check is
-   one request: a `GET` of `/_forms/submit.php` must answer **405**. If it hands back a file
-   beginning `<?php`, the host is not running PHP and no form works.
+   Production needs, outside the repo:
+
+   - **PHP.** A `GET /_forms/submit.php` must answer **405**. If it hands back a file
+     beginning `<?php`, the host is not running PHP and no form works.
+   - **`private/config.php` beside `public_html`** (`dirname($_SERVER['DOCUMENT_ROOT'])`),
+     0600, never committed: this repo is public and is the website.
+     [`tools/config.example.php`](tools/config.example.php) documents every key; the minimum
+     is `mail.resend.api_key`.
+   - **waterautomation.com verified in Resend**: the DKIM TXT and the `send.` MX and SPF
+     records Resend lists, added in Cloudflare as DNS only. They change none of the
+     Microsoft 365 records.
+   - **One test submission after deploy**, then read the log in that `private/` folder:
+     each enquiry has a `submission` line and a `delivery` line with the same id (the
+     `Ref:` in the email), and `grep '"ok":false' private/submissions-*.jsonl` lists any
+     that did not go out. Spam-trap hits go to `private/spam-YYYY-MM.jsonl`.
 
 2. **WooCommerce does not transact.** Cart, checkout and Stripe render but do nothing.
    [COMMERCE.md](COMMERCE.md) sets out what replaces it, and what to export from WordPress
