@@ -84,6 +84,14 @@ function wa_config()
     }
     $cfg = [];
     if (is_file($path) && is_readable($path)) {
+        // OPcache would otherwise go on serving the old compiled copy of an
+        // edited config for up to opcache.revalidate_freq seconds (or until a
+        // restart, where timestamps are not checked). Without force, this
+        // recompiles only when the file really changed. Silenced because
+        // shared hosts may restrict the OPcache API, which is then a no-op.
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($path, false);
+        }
         try {
             $loaded = wa_config_include($path);
             if (is_array($loaded)) {
