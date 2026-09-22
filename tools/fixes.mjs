@@ -118,6 +118,30 @@ export const FIXES = [
       nobody here decided otherwise. What changes is that it can now be
       satisfied.`,
   },
+  {
+    id: 'fastbots-embed-loaded-twice',
+    from: '<div id="aqvc-bot-wrap">\n    <script defer src="https://app.fastbots.ai/embed.js" data-bot-id="cmpmo1o4e00a7p01oh2nflf81"></script>\n  </div>',
+    to: '<div id="aqvc-bot-wrap">\n  </div>',
+    expect: 185,
+    why: `
+      Every page includes the FastBots chat script twice: once in <head>, and
+      again inside #aqvc-bot-wrap, part of a floating video widget in the header
+      template. embed.js declares top-level constants, so the second copy
+      throws "Identifier 'darkLogos' has already been declared" on every page
+      load and does nothing else. Seen in Chromium on the pre-change build, on
+      every page checked, served and behind a simulated Rocket Loader.
+
+      The <head> copy is the one kept, because it is the one that runs today:
+      the chat launcher it builds is unchanged. The one removed sits in an
+      Elementor HTML widget that is hidden at every breakpoint, and embed.js
+      appends its launcher to <body> whichever copy loads it, so the wrapper
+      was never where the chat appeared. The empty wrapper div stays, to keep
+      the widget's markup otherwise as the site wrote it.
+
+      185 is every captured page: all 184 routes plus 404.html. /checkout/ has
+      the same duplicate but was captured from the rendered DOM (defer="") and
+      is left to the shop work, which owns that page.`,
+  },
 ]
 
 export const TRANSFORMS = [
