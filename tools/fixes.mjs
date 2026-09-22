@@ -142,6 +142,84 @@ export const FIXES = [
       the same duplicate but was captured from the rendered DOM (defer="") and
       is left to the shop work, which owns that page.`,
   },
+
+  // Internal links that only reach their page through a redirect. Each one is
+  // pointed straight at where the redirect lands. The redirect rules stay in
+  // _redirects and .htaccess regardless: outside links and old bookmarks still
+  // use the old addresses.
+  {
+    id: 'link-via-redirect-contact',
+    from: 'href="/contact/"',
+    to: 'href="/contact-us/"',
+    expect: 2,
+    why: `
+      /contact/ is an old slug that 301s to /contact-us/ (_redirects). Linked as
+      "Contact us" in the closing paragraph of
+      /how-much-water-does-a-running-toilet-use/, and again in that post's
+      excerpt on /blog/page/11/.`,
+  },
+  {
+    id: 'link-via-redirect-dated-top-10-post',
+    from: 'href="/2025/11/05/top-10-hidden-plumbing-lines-that-cause-water-damage-and-how-to-stop-leaks-before-they-start/"',
+    to: 'href="/top-10-hidden-plumbing-lines-that-cause-water-damage-and-how-to-stop-leaks-before-they-start/"',
+    expect: 3,
+    why: `
+      The post's old dated permalink, which 301s to its post-name URL
+      (_redirects). Five links on the post itself, five in its card on
+      /blog/page/4/, one in
+      /how-climate-change-is-increasing-residential-water-leak-risk-in-the-us-and-what-homeowners-should-do/.`,
+  },
+  {
+    id: 'link-via-redirect-new-buy-now-lander',
+    from: 'href="/new-buy-now-lander/#learnmore"',
+    to: 'href="/buy-now/"',
+    expect: 2,
+    why: `
+      The "Learn More" button on /book-a-call/ and /buy-now-lander/ links a
+      retired lander that 301s to /buy-now/ (_redirects). The fragment is
+      dropped because /buy-now/ has no #learnmore, so the browser has always
+      landed at the top of /buy-now/: the destination a visitor reaches is
+      unchanged.
+
+      Not changed, and worth a decision: both pages have their own
+      id="learnmore" section a few lines below the button, so the button was
+      probably meant to be an on-page jump (#learnmore) that kept the visitor
+      on the lander. That is a behaviour change, so it is left to the client.`,
+  },
+  {
+    id: 'link-via-redirect-products-aquahalt',
+    from: 'href="/products/aquahalt"',
+    to: 'href="/product/aquahalt-2x/"',
+    expect: 3,
+    why: `
+      The old product URL scheme, which 301s to /product/aquahalt-2x/
+      (_redirects). Linked from three blog posts: the climate-change post, the
+      rental-property checklist (twice) and the winter plumbing post. MIRROR.md
+      used to leave these alone as "a change to working links"; on 22 September
+      2026 production answered /products/aquahalt with a 404, so they were not
+      reliably working links.`,
+  },
+  {
+    id: 'link-via-redirect-contact-us-no-slash',
+    from: 'href="/contact-us"',
+    to: 'href="/contact-us/"',
+    expect: 12,
+    why: `
+      Written without its trailing slash, so every click costs a 301 to
+      /contact-us/ (production answered it that way on 22 September 2026).
+      Two links on each of the homepage, the eight city pages,
+      /builder-lander/ and /habtrack-lander/, and one on /buy-now/: the "Contact
+      us" calls to action on the site's main landing pages.`,
+  },
+  {
+    id: 'link-via-redirect-buy-now-no-slash',
+    from: 'href="/buy-now"',
+    to: 'href="/buy-now/"',
+    expect: 1,
+    why: `
+      Same as link-via-redirect-contact-us-no-slash: one link on /contact-us/
+      that 301s to /buy-now/ for want of the slash.`,
+  },
 ]
 
 /*

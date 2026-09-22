@@ -155,13 +155,18 @@ transform rather than a literal pair because the hash differs on every page; the
 and the per-page self-checks, are in `tools/rocket-loader.mjs`, and `npm test` covers its
 edge cases.
 
-### Related, not fixed
+### Links that only worked through a redirect (`link-via-redirect-*`)
 
-`href="/products/aquahalt"` appears on 4 pages and **301s** to `/product/aquahalt-2x/` on
-the live site, so it works. Pointing those four links straight at the destination would save
-a redirect hop, but it is a change to working links rather than a fix, so it was left alone.
-The redirect rule in `_redirects` has to stay either way — external backlinks may point at
-that URL.
+This section used to leave `href="/products/aquahalt"` alone as "a change to working links
+rather than a fix". On 22 September 2026 production answered it, and every other
+`_redirects` source, with a 404, so a link that depends on a redirect is only as reliable as
+the host's redirect rules. 43 internal links on 22 pages now point straight at where their
+redirect lands: `/contact/` (2), the dated `/2025/11/05/top-10-…/` post URL (11),
+`/new-buy-now-lander/#learnmore` (2, to `/buy-now/`; that page has no `#learnmore`, so the
+landing is unchanged), `/products/aquahalt` (4), and `/contact-us` and `/buy-now` written
+without their trailing slash (24). Nothing links `/sitemap.xml`. The rules stay in
+`_redirects` and `.htaccess` either way, because outside links and bookmarks still use the old
+addresses. The reasons, page by page, are in `tools/fixes.mjs`.
 
 ---
 
