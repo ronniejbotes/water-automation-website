@@ -62,7 +62,7 @@ $FORMS = [
     '53ba0a2' => ['label' => 'Request a call', 'honeypots' => ['hpot'], 'fields' => ['name' => 'Name', 'email' => 'E-mail', 'tel' => 'Tel', 'message' => 'Message']],
     '66e5502' => ['label' => 'Submit', 'honeypots' => ['field_f6ed4c3'], 'fields' => ['name' => 'Name', 'email' => 'E-mail', 'consent' => 'I Authorize Water Automation']],
     '6f38a5b5' => ['label' => 'Request a call', 'honeypots' => ['hpot'], 'fields' => ['name' => 'Name', 'email' => 'E-mail', 'tel' => 'Tel', 'message' => 'Message']],
-    'a69a1db' => ['label' => 'Request a call', 'honeypots' => [], 'fields' => ['name' => 'Name', 'email' => 'E-mail', 'tel' => 'Tel', 'message' => 'Message']],
+    'a69a1db' => ['label' => 'Request a call', 'honeypots' => ['hpot'], 'fields' => ['name' => 'Name', 'email' => 'E-mail', 'tel' => 'Tel', 'message' => 'Message']],
     'b7b7273' => ['label' => 'Request a call', 'honeypots' => ['hpot'], 'fields' => ['name' => 'Name', 'email' => 'E-mail', 'tel' => 'Tel', 'message' => 'Message']],
     'c847ee0' => ['label' => 'Request a call', 'honeypots' => ['hpot'], 'fields' => ['name' => 'Name', 'email' => 'E-mail', 'tel' => 'Tel', 'message' => 'Message']],
     'd0d16b3' => ['label' => 'Request a call', 'honeypots' => ['hpot'], 'fields' => ['name' => 'Name', 'job_title' => 'Job Title', 'company' => 'Company Name', 'email' => 'E-mail', 'tel' => 'Tel', 'message' => 'Message']],

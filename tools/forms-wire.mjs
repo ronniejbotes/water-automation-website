@@ -48,6 +48,8 @@
  *     third-party request on 29 pages that renders nothing and is called by
  *     nothing (the secret key that verified those tokens belongs to the
  *     WordPress install and does not come with us);
+ *   - gives the one form with no spam trap (/case-studies/, a69a1db) the same
+ *     hidden `hpot` field the other nine carry;
  *   - replaces the phone pattern on all 30 tel fields (see PHONE_PATTERN);
  *   - loads /_forms/forms.js on every page with a form, which puts back what
  *     Elementor's handler did for a visitor: the post goes by fetch, the
@@ -99,6 +101,8 @@ const EXPECT = {
 const EXPECT_ALWAYS = {
   telFields: 30,     // name="form_fields[tel]" inputs, all of them type="tel"
                      // once tools/fixes.mjs has corrected /case-studies/
+  noHoneypot: 1,     // forms with no spam trap before this tool adds one
+                     // (a69a1db on /case-studies/); 0 once it has
   formPages: 30,     // pages that must load /_forms/forms.js
 }
 
@@ -134,6 +138,18 @@ const PHONE_PATTERN = String.raw`\+?[ \(]*(?:[0-9][ \-\.\(\)]*){7,15}(?:[ ,]*(?:
 const PHONE_TITLE = 'Enter a phone number, e.g. (555) 555-5555 or +1 555 555 5555. Add an extension with x or ext.'
 const OLD_PHONE_ATTRS = 'pattern="[0-9()#&amp;+*-=.]+" title="Only numbers and phone characters (#, -, *, etc) are accepted."'
 const NEW_PHONE_ATTRS = `pattern="${PHONE_PATTERN}" title="${PHONE_TITLE}"`
+
+/*
+ * The spam trap for the one form that has none, in the markup Elementor
+ * renders for its honeypot field on the other nine: a text input named hpot,
+ * hidden with an inline style. One difference: the wrapper is hidden too. The
+ * other nine sit in a flex row, where an empty wrapper takes no space; the
+ * /case-studies/ form is laid out by a CSS grid (post-1324.css) that places
+ * every .elementor-field-type-text in column 1, so a visible empty wrapper
+ * there would claim a grid cell and push the submit button across.
+ */
+const HONEYPOT_HTML = '\n\t\t\t\t\t\t\t\t<div class="elementor-field-type-text" style="display:none !important;">\n'
+  + '\t\t\t\t\t<input size="1" type="text" name="form_fields[hpot]" id="form-field-hpot" class="elementor-field elementor-size-md " style="display:none !important;">\t\t\t\t</div>'
 
 // Both addresses are the site's own, decoded from the Cloudflare-obfuscated
 // mailto links on /contact-us/. That page says, in its own words, "For general
@@ -202,6 +218,14 @@ function readForm(chunk) {
   return { id, fields, honeypots, button: button || 'Website form' }
 }
 
+/** True if a form chunk already carries a hidden spam-trap field. */
+function hasHoneypot(chunk) {
+  for (const m of chunk.matchAll(/<input\b([^>]*)>/gi)) {
+    if (/name="form_fields\[[^\]]+\]"/.test(m[1]) && /display:\s*none/i.test(m[1])) return true
+  }
+  return false
+}
+
 /* ---------------------------------------------------------- the phone check */
 
 // The pattern is only worth shipping if a browser will actually apply it, so
@@ -242,6 +266,8 @@ let widgets = 0
 let forms = 0
 let recaptcha = 0
 let alreadyWired = 0
+let noHoneypot = 0
+let honeypotsAdded = 0
 let telFields = 0
 let oldPhone = 0
 let newPhone = 0
@@ -254,7 +280,19 @@ for (const f of files) {
   let html = before
   const url = urlOf(f)
 
-  // Harvest before editing, while the markup is still the capture's own.
+  // 0. A spam trap for any form without one. Before the harvest, so the trap is
+  //    in the definition baked into the handler.
+  html = html.replace(/<form[^>]*class="[^"]*elementor-form[^"]*"[\s\S]*?<\/form>/gi, (chunk) => {
+    if (hasHoneypot(chunk)) return chunk
+    noHoneypot++
+    const afterTel = /(<input[^>]*name="form_fields\[tel\]"[^>]*>\s*<\/div>)/
+    const beforeSubmit = /(\n[ \t]*)(<div class="elementor-field-group elementor-column elementor-field-type-submit)/
+    if (afterTel.test(chunk)) { honeypotsAdded++; return chunk.replace(afterTel, `$1${HONEYPOT_HTML}`) }
+    if (beforeSubmit.test(chunk)) { honeypotsAdded++; return chunk.replace(beforeSubmit, `${HONEYPOT_HTML}$1$2`) }
+    return chunk
+  })
+
+  // Harvest before the other edits, while the markup is still the capture's own.
   for (const chunk of formChunks(html)) {
     const def = readForm(chunk)
     if (!def) continue
@@ -347,6 +385,8 @@ const always = [
     telFields === EXPECT_ALWAYS.telFields - 1 ? 'one tel field is not type="tel": run npm run fix first (case-studies-tel-input-type)' : ''],
   ['oldPhone', oldPhone, oldPhone === 0 || oldPhone === EXPECT_ALWAYS.telFields, ''],
   ['newPhone', newPhone, newPhone === EXPECT_ALWAYS.telFields, ''],
+  ['noHoneypot', noHoneypot, noHoneypot === 0 || noHoneypot === EXPECT_ALWAYS.noHoneypot, ''],
+  ['honeypotAdd', honeypotsAdded, honeypotsAdded === noHoneypot, ''],
   ['formPages', formPages, formPages === EXPECT_ALWAYS.formPages, ''],
   ['scriptPages', scriptPages, scriptPages === EXPECT_ALWAYS.formPages, ''],
 ]
@@ -1202,6 +1242,7 @@ if (DRY) {
   console.log()
   console.log(`  ${scriptPages} page(s) to load ${FORMS_JS}?ver=${FORMS_JS_VER}`)
   console.log(`  ${oldPhone} phone pattern(s) to replace`)
+  console.log(`  ${honeypotsAdded} spam trap(s) to add`)
   console.log(`\nWould write _forms/submit.php (${defs.size} form definition(s) baked in)`)
   console.log(`Would write _forms/forms.js (${FORMS_JS_SOURCE.length} bytes, ver ${FORMS_JS_VER})`)
   console.log('Would write thank-you/index.html')
@@ -1224,6 +1265,7 @@ console.log(`Rewrote ${edits.size} page(s).`)
 console.log(`  ${widgets} widget hook(s) renamed, ${forms} form action(s) set, ${recaptcha} reCAPTCHA loader(s) dropped`)
 console.log(`  ${scriptPages} page(s) load ${FORMS_JS}?ver=${FORMS_JS_VER}`)
 console.log(`  ${oldPhone} phone pattern(s) replaced`)
+console.log(`  ${honeypotsAdded} spam trap(s) added`)
 console.log(`  _forms/submit.php   -> forms.to from the private config, else ${TO}   (needs a PHP host — see the preflight)`)
 console.log(`  _forms/forms.js     -> answers in place under the form, as Elementor did`)
 console.log(`  thank-you/index.html written (noindex, not in any sitemap)`)
