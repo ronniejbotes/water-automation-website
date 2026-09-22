@@ -84,13 +84,15 @@ npm run mirror            # browser capture (--resume continues an interrupted r
 npm run assets            # backfill what a browser never requests: srcset variants,
                           # font weights, PDFs, video
 npm run mirror:checkout   # the checkout template, which only renders with a filled cart
-npm run fix               # re-apply the link corrections in tools/fixes.mjs
+npm run fix               # re-apply the corrections in tools/fixes.mjs, Rocket Loader removal included
 npm run forms:wire        # re-wire the forms to /_forms/submit.php
 ```
 
 **`npm run fix` and `npm run forms:wire` are not optional after a rebuild.** The capture
 writes the live site's markup verbatim, broken links and all, so skipping `fix` silently
-reverts the two link fixes and the site goes back to linking two 404s from 23 places, and
+reverts every correction in `tools/fixes.mjs`. The worst of those is Rocket Loader: a capture
+taken through Cloudflare carries its output, and served through Cloudflare again with Rocket
+Loader on, no Elementor Pro widget works on any page (menus, sticky header, carousels). And
 skipping `forms:wire` hands every form back to Elementor's JavaScript and to an
 `admin-ajax.php` that is not there. Both are idempotent, so running them when nothing needs
 fixing is free. `forms:wire` checks its own counts and stops rather than half-applying if the
