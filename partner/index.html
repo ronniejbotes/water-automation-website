@@ -1279,7 +1279,7 @@ document.getElementById('aqvc-close').addEventListener('click',function(){
 								<div class="elementor-field-type-tel elementor-field-group elementor-column elementor-field-group-tel elementor-col-50 elementor-field-required">
 												<label for="form-field-tel" class="elementor-field-label elementor-screen-only">
 								Tel							</label>
-								<input size="1" type="tel" name="form_fields[tel]" id="form-field-tel" class="elementor-field elementor-size-md  elementor-field-textual" placeholder="+1 999 999 9999" required="required" pattern="[0-9()#&amp;+*-=.]+" title="Only numbers and phone characters (#, -, *, etc) are accepted.">
+								<input size="1" type="tel" name="form_fields[tel]" id="form-field-tel" class="elementor-field elementor-size-md  elementor-field-textual" placeholder="+1 999 999 9999" required="required" pattern="\+?[ \(]*(?:[0-9][ \-\.\(\)]*){7,15}(?:[ ,]*(?:[xX]|[eE][xX][tT]\.?|[eE][xX][tT][eE][nN][sS][iI][oO][nN]|#)[ \.:]*[0-9]{1,6})?" title="Enter a phone number, e.g. (555) 555-5555 or +1 555 555 5555. Add an extension with x or ext.">
 
 						</div>
 								<div class="elementor-field-type-textarea elementor-field-group elementor-column elementor-field-group-message elementor-col-100">

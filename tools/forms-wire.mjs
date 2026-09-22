@@ -48,6 +48,7 @@
  *     third-party request on 29 pages that renders nothing and is called by
  *     nothing (the secret key that verified those tokens belongs to the
  *     WordPress install and does not come with us);
+ *   - replaces the phone pattern on all 30 tel fields (see PHONE_PATTERN);
  *   - loads /_forms/forms.js on every page with a form, which puts back what
  *     Elementor's handler did for a visitor: the post goes by fetch, the
  *     button shows its busy state, and the answer appears in place under the
@@ -96,6 +97,8 @@ const EXPECT = {
 // Checked on every run, wired or not, because the edits behind them are newer
 // than the wiring and apply to a build that is already wired.
 const EXPECT_ALWAYS = {
+  telFields: 30,     // name="form_fields[tel]" inputs, all of them type="tel"
+                     // once tools/fixes.mjs has corrected /case-studies/
   formPages: 30,     // pages that must load /_forms/forms.js
 }
 
@@ -103,6 +106,34 @@ const FORM_ACTION = '/_forms/submit.php'
 const FORMS_JS = '/_forms/forms.js'
 const PAGE_FIELD = 'wa_page'
 const THANKS_URL = '/thank-you/'
+
+/*
+ * The phone field's pattern.
+ *
+ * Elementor ships "[0-9()#&+*-=.]+" on every tel field. A browser compiles a
+ * pattern attribute as ^(?:pattern)$ with the RegExp v flag (current Chrome,
+ * Edge, Firefox and Safari), and under v that one is a syntax error, because
+ * "(" and ")" must be escaped inside a class. An invalid pattern is ignored, so
+ * in those browsers the field was never checked at all. Under the older u flag
+ * it compiles, but "*-=" is a range and a space is not in the set, so it
+ * refused "+1 555 555 5555" and "(555) 555-5555" -- the site's own placeholder
+ * format -- and Elementor's server-side check, the same expression in PHP,
+ * refused them too.
+ *
+ * This one is valid under both flags (every class character that v reserves is
+ * escaped, and nothing is escaped that u forbids), and the phone check below
+ * refuses to run unless it compiles and answers correctly under both. It
+ * accepts US numbers written any of the usual ways: digits with spaces, dots,
+ * dashes or parentheses, a leading +, 7 to 15 digits in all (so +44 numbers
+ * pass too), and an extension written x, ext, ext., extension or # followed by
+ * up to 6 digits. Each digit is followed only by separators and the extension
+ * starts with a letter or #, so no two parts can match the same text: it runs
+ * in linear time on any input.
+ */
+const PHONE_PATTERN = String.raw`\+?[ \(]*(?:[0-9][ \-\.\(\)]*){7,15}(?:[ ,]*(?:[xX]|[eE][xX][tT]\.?|[eE][xX][tT][eE][nN][sS][iI][oO][nN]|#)[ \.:]*[0-9]{1,6})?`
+const PHONE_TITLE = 'Enter a phone number, e.g. (555) 555-5555 or +1 555 555 5555. Add an extension with x or ext.'
+const OLD_PHONE_ATTRS = 'pattern="[0-9()#&amp;+*-=.]+" title="Only numbers and phone characters (#, -, *, etc) are accepted."'
+const NEW_PHONE_ATTRS = `pattern="${PHONE_PATTERN}" title="${PHONE_TITLE}"`
 
 // Both addresses are the site's own, decoded from the Cloudflare-obfuscated
 // mailto links on /contact-us/. That page says, in its own words, "For general
@@ -171,6 +202,27 @@ function readForm(chunk) {
   return { id, fields, honeypots, button: button || 'Website form' }
 }
 
+/* ---------------------------------------------------------- the phone check */
+
+// The pattern is only worth shipping if a browser will actually apply it, so
+// prove that here, the way a browser compiles it, under both flags.
+{
+  const good = ['555-555-5555', '(555) 555-5555', '+1 555 555 5555', '555.555.5555', '+1 (555) 555-5555 ext. 12', '555 555 5555 x7']
+  const bad = ['abc', '12345', 'john@example.com', '555-555-5555 ask for Bob']
+  for (const flag of ['u', 'v']) {
+    let re
+    try { re = new RegExp(`^(?:${PHONE_PATTERN})$`, flag) } catch (e) {
+      console.error(`PHONE_PATTERN does not compile under the ${flag} flag: ${e.message}`)
+      process.exit(1)
+    }
+    const wrong = [...good.filter((s) => !re.test(s)), ...bad.filter((s) => re.test(s))]
+    if (wrong.length) {
+      console.error(`PHONE_PATTERN answers wrongly under the ${flag} flag for: ${wrong.join(' | ')}`)
+      process.exit(1)
+    }
+  }
+}
+
 /* ------------------------------------------------------------------ the edits */
 
 const files = await walk(DIR)
@@ -190,6 +242,9 @@ let widgets = 0
 let forms = 0
 let recaptcha = 0
 let alreadyWired = 0
+let telFields = 0
+let oldPhone = 0
+let newPhone = 0
 let scriptPages = 0
 let scriptsElsewhere = 0
 let formPages = 0
@@ -238,7 +293,13 @@ for (const f of files) {
   recaptcha += r
   html = html.replace(/<script id="elementor-recaptcha_v3-api-js"[^>]*><\/script>\n?/g, '')
 
-  // 4. The in-place submit script, on every page with a form and no other.
+  // 4. The phone pattern, on every tel field.
+  telFields += (html.match(/<input[^>]*type="tel"[^>]*name="form_fields\[tel\]"/g) || []).length
+  oldPhone += html.split(OLD_PHONE_ATTRS).length - 1
+  html = html.split(OLD_PHONE_ATTRS).join(NEW_PHONE_ATTRS)
+  newPhone += html.split(NEW_PHONE_ATTRS).length - 1
+
+  // 5. The in-place submit script, on every page with a form and no other.
   //    Removed and re-added rather than left alone, so a changed script gets a
   //    new ?ver= and no browser or CDN keeps serving the old one.
   const hadScript = /<script src="\/_forms\/forms\.js/.test(html)
@@ -282,6 +343,10 @@ if (widgets === 0 && formPages > 0) {
 // and must leave the finished state behind; anything in between means the
 // capture moved and nothing is written.
 const always = [
+  ['telFields', telFields, telFields === EXPECT_ALWAYS.telFields,
+    telFields === EXPECT_ALWAYS.telFields - 1 ? 'one tel field is not type="tel": run npm run fix first (case-studies-tel-input-type)' : ''],
+  ['oldPhone', oldPhone, oldPhone === 0 || oldPhone === EXPECT_ALWAYS.telFields, ''],
+  ['newPhone', newPhone, newPhone === EXPECT_ALWAYS.telFields, ''],
   ['formPages', formPages, formPages === EXPECT_ALWAYS.formPages, ''],
   ['scriptPages', scriptPages, scriptPages === EXPECT_ALWAYS.formPages, ''],
 ]
@@ -1136,6 +1201,7 @@ if (DRY) {
   if (touched.length > 12) console.log(`   … and ${touched.length - 12} more`)
   console.log()
   console.log(`  ${scriptPages} page(s) to load ${FORMS_JS}?ver=${FORMS_JS_VER}`)
+  console.log(`  ${oldPhone} phone pattern(s) to replace`)
   console.log(`\nWould write _forms/submit.php (${defs.size} form definition(s) baked in)`)
   console.log(`Would write _forms/forms.js (${FORMS_JS_SOURCE.length} bytes, ver ${FORMS_JS_VER})`)
   console.log('Would write thank-you/index.html')
@@ -1157,6 +1223,7 @@ await writeFile(join(DIR, 'thank-you', 'index.html'), thankYouPage(await readFil
 console.log(`Rewrote ${edits.size} page(s).`)
 console.log(`  ${widgets} widget hook(s) renamed, ${forms} form action(s) set, ${recaptcha} reCAPTCHA loader(s) dropped`)
 console.log(`  ${scriptPages} page(s) load ${FORMS_JS}?ver=${FORMS_JS_VER}`)
+console.log(`  ${oldPhone} phone pattern(s) replaced`)
 console.log(`  _forms/submit.php   -> forms.to from the private config, else ${TO}   (needs a PHP host — see the preflight)`)
 console.log(`  _forms/forms.js     -> answers in place under the form, as Elementor did`)
 console.log(`  thank-you/index.html written (noindex, not in any sitemap)`)
