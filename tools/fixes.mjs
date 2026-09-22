@@ -144,6 +144,48 @@ export const FIXES = [
   },
 ]
 
+/*
+ * Four indexable pages that name a query-string URL as their own address.
+ *
+ * Each row is the page's own path, the URL Yoast wrote for it instead, and how
+ * many files carry that URL in the schema graph (the shop's also appears as the
+ * "Shop" breadcrumb on all five product pages). Three literal fixes per row:
+ * the canonical and og:url tags, then the JSON-escaped schema graph, where it
+ * is followed either by a quote or by a #fragment (#article, #breadcrumb, ...).
+ */
+const SELF_URLS = [
+  ['/shop/', '?page_id=152', 6],
+  ['/how-much-water-the-toilet-uses/', '?p=3284', 1],
+  ['/water-sensors-for-insurance/', '?p=3294', 1],
+  ['/why-is-my-toilet-making-noise-when-not-in-use/', '?p=3296', 1],
+]
+const SELF_URL_WHY = `
+  <link rel="canonical">, og:url and the Yoast schema graph on these pages name
+  WordPress's fallback address for the post (?p=NNNN, or ?page_id=152 for the
+  shop) instead of the page's own URL. A static host ignores the query string,
+  so each of those addresses serves the homepage, whose own canonical is /.
+  Checked on production on 22 September 2026: all four return the homepage.
+  So /shop/ and three blog posts tell a crawler they are duplicates of the
+  homepage, while the sitemaps submit them as pages in their own right. The
+  product pages' breadcrumb points its "Shop" step at the same address.
+
+  Each now names its own clean URL, the one the sitemaps already list, which is
+  what Yoast writes for every other page on the site. The schema @id values
+  change with it, consistently, so the graph still ties together.`
+{
+  const O = 'https://www.waterautomation.com'
+  const J = String.raw`https:\/\/www.waterautomation.com`
+  const json = (p) => p.replace(/\//g, '\\/')
+  for (const [path, query, schemaFiles] of SELF_URLS) {
+    const id = `own-url-${path.split('/').filter(Boolean).pop()}`
+    FIXES.push(
+      { id, from: `${O}/${query}"`, to: `${O}${path}"`, expect: 1, why: SELF_URL_WHY },
+      { id: `${id}-schema`, from: `${J}\\/${query}"`, to: `${J}${json(path)}"`, expect: schemaFiles, why: SELF_URL_WHY },
+      { id: `${id}-schema-fragments`, from: `${J}\\/${query}#`, to: `${J}${json(path)}#`, expect: 1, why: SELF_URL_WHY },
+    )
+  }
+}
+
 export const TRANSFORMS = [
   {
     id: 'cloudflare-rocket-loader-output',
