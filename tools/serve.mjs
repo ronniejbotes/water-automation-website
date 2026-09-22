@@ -7,8 +7,9 @@
  * clicking through it, not by reading HTML.
  *
  * It also answers /_forms/submit.php the way the real handler will, so the
- * enquiry forms can be submitted and watched end to end without PHP. See
- * handleForm below.
+ * enquiry forms can be submitted and watched end to end without PHP, both the
+ * in-place JSON answer /_forms/forms.js asks for and the 303 a plain post
+ * gets. See handleForm below.
  *
  *   node tools/serve.mjs            # http://localhost:4400
  *   PORT=5000 node tools/serve.mjs
@@ -20,6 +21,7 @@ import { networkInterfaces } from 'node:os'
 import { readFile, stat } from 'node:fs/promises'
 import { join, extname, resolve, dirname, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { MESSAGES, CONTACT } from './forms-messages.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DIR = join(ROOT, process.env.SERVE_DIR || '.')
@@ -93,9 +95,24 @@ function readBody(req) {
       if (size > 2 * 1024 * 1024) { req.destroy(); fail(new Error('body too large')) }
       parts.push(c)
     })
-    req.on('end', () => ok(Buffer.concat(parts).toString('utf8')))
+    req.on('end', () => ok(Buffer.concat(parts)))
     req.on('error', fail)
   })
+}
+
+/**
+ * The posted fields, whichever way they came: a plain browser post is
+ * urlencoded, /_forms/forms.js sends FormData, which is multipart (as
+ * Elementor's handler did). PHP reads both into $_POST; this does the same.
+ */
+async function readFields(req) {
+  const raw = await readBody(req)
+  const type = req.headers['content-type'] || ''
+  if (type.startsWith('multipart/form-data')) {
+    const form = await new Response(raw, { headers: { 'content-type': type } }).formData()
+    return new URLSearchParams([...form].filter(([, v]) => typeof v === 'string'))
+  }
+  return new URLSearchParams(raw.toString('utf8'))
 }
 
 async function handleForm(req, res) {
@@ -103,8 +120,25 @@ async function handleForm(req, res) {
     res.writeHead(405, { Allow: 'POST', 'Content-Type': 'text/plain; charset=utf-8' })
     return res.end('This address accepts form submissions only.\n')
   }
-  const fields = new URLSearchParams(await readBody(req))
+  const fields = await readFields(req)
   const get = (n) => (fields.get(`form_fields[${n}]`) || '').trim()
+
+  // The script asks for JSON and shows the answer under the form; a plain post
+  // gets the redirect or the status. Same messages the real handler bakes in.
+  const json = /application\/json/i.test(req.headers.accept || '')
+  const answer = (status, body, location) => {
+    if (json) {
+      res.writeHead(status === 303 ? 200 : status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
+      return res.end(JSON.stringify(body))
+    }
+    if (status === 303) {
+      res.writeHead(303, { Location: location, 'Cache-Control': 'no-store' })
+      return res.end()
+    }
+    res.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' })
+    return res.end(body.message.replace(/<[^>]+>/g, '') + '\n')
+  }
+  const ok = () => answer(303, { success: true, message: MESSAGES.success }, '/thank-you/')
 
   // Elementor hides its spam trap with an inline style rather than type=hidden,
   // and calls it something different on each form, so anything that arrives
@@ -114,14 +148,15 @@ async function handleForm(req, res) {
     const m = /^form_fields\[([^\]]+)\]$/.exec(k)
     if (m && !visible.has(m[1]) && v.trim() !== '') {
       console.log(`  [form] honeypot "${m[1]}" filled — answered as success, nothing sent`)
-      res.writeHead(303, { Location: '/thank-you/', 'Cache-Control': 'no-store' })
-      return res.end()
+      return ok()
     }
   }
 
   if (get('email') === '' && get('tel') === '') {
-    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' })
-    return res.end('We need a way to reply.\n')
+    return answer(400, { success: false, message: MESSAGES.error, errors: { email: MESSAGES.required } })
+  }
+  if (get('email') !== '' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(get('email'))) {
+    return answer(400, { success: false, message: MESSAGES.error, errors: { email: MESSAGES.badEmail } })
   }
 
   console.log(`\n  [form] POST ${FORM_ENDPOINT}`)
@@ -130,10 +165,9 @@ async function handleForm(req, res) {
     const m = /^form_fields\[([^\]]+)\]$/.exec(k)
     if (m && v.trim() !== '') console.log(`  [form]   ${m[1].padEnd(12)} ${v.replace(/\n/g, ' ')}`)
   }
-  console.log(`  [form]   -> 303 /thank-you/  (the real handler would mail this)\n`)
+  console.log(`  [form]   -> ${json ? 'JSON success, shown in place' : '303 /thank-you/'}  (the real handler would log and mail this to ${CONTACT} or forms.to)\n`)
 
-  res.writeHead(303, { Location: '/thank-you/', 'Cache-Control': 'no-store' })
-  return res.end()
+  return ok()
 }
 
 createServer(async (req, res) => {

@@ -56,9 +56,12 @@ RewriteCond %{REQUEST_FILENAME} (\.(md|markdown|mjs)|/_redirects|/package(-lock)
 RewriteRule ^ - [R=404,L]
 
 # Anything whose path starts with "_" at the root: _redirects, _raw/,
-# _headers, the gitignored _*.mjs/_*.json/_*.txt/_*.png probe files, and every
-# path under _forms/ -- except the one file the enquiry forms post to.
+# _headers, the gitignored _*.mjs/_*.json/_*.txt/_*.png probe files, _lib/
+# (the PHP the handlers include, never meant to be requested), and every path
+# under _forms/ -- except the file the enquiry forms post to and the script
+# that posts them in place (tools/forms-wire.mjs writes both).
 RewriteCond %{REQUEST_URI} !^/_forms/submit\.php$
+RewriteCond %{REQUEST_URI} !^/_forms/forms\.js$
 RewriteRule ^_ - [R=404,L]
 
 # Dot-files and dot-directories at any depth (.git/, .gitignore,
