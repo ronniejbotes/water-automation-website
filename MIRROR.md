@@ -134,6 +134,27 @@ equity the site currently spends on a 404.
 expected number of files, it stops rather than half-applying, because a moved count means
 the live site changed underneath the fix and it needs re-reading before it is trusted.
 
+### Rocket Loader, taken back out (`cloudflare-rocket-loader-output`)
+
+The capture was taken through Cloudflare with Rocket Loader on, so every page arrived with
+Rocket Loader's output baked in: each script retyped to `<hash>-text/javascript` and a
+`rocket-loader.min.js` tag before `</body>`. That runs on its own, which is why the unproxied
+apex works. But www is served through Cloudflare with Rocket Loader still on, and the edge
+adds a second loader over the first (seen on production on 22 September 2026: two loader
+tags on www, one on the apex). With two loaders the ready events fire early and twice, and
+Elementor Pro never starts: no mobile menu, no desktop dropdowns, no sticky header, dead
+carousels, hotspots and menu cart, on every www page.
+
+`npm run fix` now puts every page back to what the origin sent before Cloudflare touched it:
+7,547 script tags across 186 pages lose the type Rocket Loader added (none of them had a type
+before it), and the baked-in loader tag goes. The pages then work with Rocket Loader off, and
+with it on the edge makes the single pass the old site always had. Left exactly as they were:
+the `data-cfasync="false"` email decoder, the `/cdn-cgi/l/email-protection` links, JSON-LD,
+speculation rules, and the Cloudflare Web Analytics beacon (a separate product). This is a
+transform rather than a literal pair because the hash differs on every page; the reasoning,
+and the per-page self-checks, are in `tools/rocket-loader.mjs`, and `npm test` covers its
+edge cases.
+
 ### Related, not fixed
 
 `href="/products/aquahalt"` appears on 4 pages and **301s** to `/product/aquahalt-2x/` on
@@ -404,9 +425,11 @@ These load from their own CDNs on the copy exactly as they do on the live site, 
 working: Google Tag Manager, Trustindex reviews, the FastBots chat widget, Google Fonts and
 `fonts.cdnfonts.com`, and the YouTube installation videos linked from the Products menu.
 
-Cloudflare's own `/cdn-cgi/` endpoints (the RUM beacon, Rocket Loader) are injected into the
-HTML by the CDN rather than served from the site's files, so they 404 off the copy. Putting
-the new host behind Cloudflare restores them; nothing else depends on them.
+Cloudflare's own `/cdn-cgi/` endpoints are answered by the CDN, not by the site's files.
+Off Cloudflare the Web Analytics beacon's `POST /cdn-cgi/rum` 404s, which is harmless.
+Rocket Loader is no longer in the pages at all (see
+[Rocket Loader, taken back out](#rocket-loader-taken-back-out-cloudflare-rocket-loader-output)):
+if the zone has it switched on, the edge adds it, once.
 
 ---
 

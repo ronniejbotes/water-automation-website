@@ -16,7 +16,16 @@
  *     moved means the capture changed underneath the fix and it needs re-reading
  *     before it is trusted.
  *   - `why` explains the decision, not the mechanics.
+ *
+ * FIXES are literal find-and-replace pairs. TRANSFORMS, at the bottom, are for
+ * the corrections a literal pair cannot express, because the text differs on
+ * every page (Rocket Loader's per-page hash) or the file is not HTML. They run
+ * first, so FIXES are written against the page as it stands after them. Each
+ * one checks itself: it reports what it could not understand instead of
+ * guessing, and it names what must be gone afterwards (`residue`), which has to
+ * come out at zero.
  */
+import { undoRocketLoader, rocketLoaderResidue } from './rocket-loader.mjs'
 
 export const FIXES = [
   {
@@ -108,5 +117,46 @@ export const FIXES = [
       The field stays required, because it is required on the live site and
       nobody here decided otherwise. What changes is that it can now be
       satisfied.`,
+  },
+]
+
+export const TRANSFORMS = [
+  {
+    id: 'cloudflare-rocket-loader-output',
+    summary: 'restore every script to what the origin sent, and drop the baked-in Rocket Loader',
+    run(html) {
+      const r = undoRocketLoader(html)
+      return {
+        text: r.html,
+        changed: r.changed,
+        counts: { loaders: r.loaders, scripts: r.typeRemoved + r.typeRestored, handlers: r.handlers },
+        problems: r.problems,
+      }
+    },
+    residue: rocketLoaderResidue,
+    why: `
+      Every page was captured through Cloudflare with Rocket Loader on, so each
+      one carries Rocket Loader's output rather than the origin's markup: its
+      scripts retyped to "<hash>-text/javascript" and its loader tag before
+      </body>. www is still served through Cloudflare with Rocket Loader on, so
+      the edge adds a second loader over the first. Seen on production on 22
+      September 2026: two rocket-loader.min.js tags on www, one on the unproxied
+      apex. With two loaders the page's ready events fire early and twice and
+      Elementor Pro never starts on any www page: the hamburger does nothing,
+      the Products and Partner dropdowns do not open, the header is not sticky
+      and the carousels, hotspots and menu cart are dead.
+
+      Restoring the origin markup makes the pages correct either way. With
+      Rocket Loader off they run natively. With it on, the edge does one pass,
+      which is how the old WordPress site ran. Full reasoning, including how an
+      appended type is told apart from a rewritten one, is in
+      tools/rocket-loader.mjs.
+
+      No page count is pinned here, unlike the literal FIXES. Nothing about this
+      correction goes stale when a page is added or removed; what would make it
+      unsafe is a page in a shape it does not understand, and that is checked on
+      every page instead: each retyped script must be restored, the hash on the
+      scripts must be the one the loader tag declares, and nothing of Rocket
+      Loader may be left, the hash included.`,
   },
 ]

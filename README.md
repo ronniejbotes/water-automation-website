@@ -46,6 +46,7 @@ works on Netlify, Cloudflare Pages, Vercel, GitHub Pages, Apache or nginx.
 
 ```bash
 npm test            # the extractor's edge cases — 17 shapes this site's markup actually uses
+                    # (and the Rocket Loader restore's cases, tools/test-rocket-loader.mjs)
 npm run verify      # every route present, every reference resolves, no origin leaks
 npm run linkcheck   # requests every internal link, checks every #anchor exists
 npm run audit       # loads every page with real input, logs every same-origin 404

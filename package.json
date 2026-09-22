@@ -13,7 +13,7 @@
     "fix:dry": "node tools/apply-fixes.mjs --dry",
     "serve": "node tools/serve.mjs",
     "serve:lan": "node -e \"process.env.HOST='0.0.0.0';process.env.PORT=process.env.PORT||'4401';import('./tools/serve.mjs')\"",
-    "test": "node tools/test-extract.mjs",
+    "test": "node tools/test-extract.mjs && node tools/test-rocket-loader.mjs",
     "verify": "node tools/verify.mjs",
     "linkcheck": "node tools/linkcheck.mjs",
     "forms": "node tools/form-inventory.mjs",
