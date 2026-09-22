@@ -168,6 +168,16 @@ without their trailing slash (24). Nothing links `/sitemap.xml`. The rules stay 
 `_redirects` and `.htaccess` either way, because outside links and bookmarks still use the old
 addresses. The reasons, page by page, are in `tools/fixes.mjs`.
 
+### Sitemap: pages robots.txt blocks, taken out (`sitemap-drop-robots-blocked-pages`)
+
+`/checkout/`, `/my-account/` and `/cart/` are removed from `page-sitemap.xml`, whole `<url>`
+blocks, the rest of the file byte for byte as Yoast wrote it. `robots.txt` disallows all
+three, and a sitemap that submits what robots.txt blocks is a Search Console error.
+`/case-studies/` is **not** added: it is an empty category archive ("No articles for Case
+Studies found."), which Yoast leaves out of the category sitemap on purpose. `/sample-page/`
+stays listed until someone decides to delete it (item 5 under
+[Issues carried over](#issues-carried-over-from-the-live-site)).
+
 ---
 
 ## Verification

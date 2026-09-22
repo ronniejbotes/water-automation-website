@@ -303,4 +303,52 @@ export const TRANSFORMS = [
       scripts must be the one the loader tag declares, and nothing of Rocket
       Loader may be left, the hash included.`,
   },
+  {
+    id: 'sitemap-drop-robots-blocked-pages',
+    summary: 'drop /checkout/, /my-account/ and /cart/ from page-sitemap.xml, as Yoast formats it',
+    files: ['page-sitemap.xml'],
+    expect: { entries: 3 },
+    run(xml) {
+      const before = (xml.match(/<url>/g) || []).length
+      let entries = 0
+      // One Yoast <url> block: tab-indented, <loc> first, closed by "\t</url>\n".
+      // Removing the whole block, lines and all, leaves the file exactly as
+      // Yoast would have written it without that page.
+      const text = xml.replace(/\t<url>\n\t\t<loc>([^<]*)<\/loc>\n[\s\S]*?\t<\/url>\n/g, (block, loc) => {
+        if (!ROBOTS_BLOCKED_IN_SITEMAP.includes(loc)) return block
+        entries++
+        return ''
+      })
+      const after = (text.match(/<url>/g) || []).length
+      const problems = after === before - entries ? [] : [`<url> count went from ${before} to ${after} after removing ${entries}`]
+      return { text, changed: text !== xml, counts: { entries }, problems }
+    },
+    residue: (xml) => ROBOTS_BLOCKED_IN_SITEMAP.filter((u) => xml.includes(`<loc>${u}</loc>`)).length,
+    why: `
+      Yoast lists WooCommerce's cart, checkout and account pages in
+      page-sitemap.xml, and robots.txt disallows all three (its "WooCommerce
+      transactional pages" block). Submitting a URL and blocking it at the same
+      time is a Search Console error ("Submitted URL blocked by robots.txt"),
+      and none of the three is a page anyone should land on from a search.
+      Each <url> block is removed whole, matched by its <loc> rather than its
+      <lastmod>, so a recapture with new dates is still caught.
+
+      Deliberately not done, and why:
+
+      /case-studies/ is not added. It is indexable, but it is an empty category
+      archive: the page reads "No articles for Case Studies found." Yoast leaves
+      empty terms out of category-sitemap.xml on purpose, and adding it would
+      ask Google to index an empty listing. Fill it or noindex it first.
+
+      /sample-page/ stays in the sitemap. It is WordPress's default sample page
+      ("I'm a bike messenger by day...") and should be deleted at the source,
+      but removing a live page is a content decision, not a sitemap fix.`,
+  },
+]
+
+// Absolute, exactly as Yoast writes <loc>.
+const ROBOTS_BLOCKED_IN_SITEMAP = [
+  'https://www.waterautomation.com/checkout/',
+  'https://www.waterautomation.com/my-account/',
+  'https://www.waterautomation.com/cart/',
 ]
