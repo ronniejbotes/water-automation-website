@@ -19,19 +19,19 @@
  *   node tools/fetch-cover-media.mjs
  *   node tools/fetch-cover-media.mjs --dry     # say what it would do, write nothing
  *
- * Needs a Chromium for the JPEG encode — same CHROME convention as the other
- * browser tools here. ffmpeg is optional: without it the loop ships at whatever
- * the source is, and the script says so rather than failing.
+ * Wants an ffmpeg (`npm i --no-save ffmpeg-static` is the easiest), which does both
+ * encodes on its own. Without one it falls back to the Chromium the other
+ * browser tools here use for the poster — same CHROME convention — and ships the
+ * loop at source size, saying so rather than failing.
  *
  * Re-running is safe. Both outputs are overwritten from source each time.
  */
-import { mkdir, stat, access } from 'node:fs/promises'
+import { mkdir, stat } from 'node:fs/promises'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { join, resolve, dirname } from 'node:path'
 import { tmpdir } from 'node:os'
-import { fileURLToPath } from 'node:url'
-import { chromium } from 'playwright-core'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const run = promisify(execFile)
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -79,6 +79,8 @@ async function download(url, dest) {
 }
 
 /** ffmpeg-static if it is installed, else whatever is on PATH, else nothing. */
+const chromiumLazy = async () => (await import('playwright-core')).chromium
+
 async function findFfmpeg() {
   if (process.env.FFMPEG) return process.env.FFMPEG
   try {
@@ -91,11 +93,17 @@ async function findFfmpeg() {
   } catch { return null }
 }
 
+const FFMPEG = await findFfmpeg()
+
 if (DRY) {
   console.log(`Would write into ${OUT}:`)
-  console.log(`  hero-water-poster.jpg   1600x893 JPEG q74, re-encoded from ${PLATE.split('/').pop()}`)
+  console.log(`  hero-water-poster.jpg   1600x893 JPEG, from ${PLATE.split('/').pop()}`)
   console.log(`  hero-water-loop.mp4     1280x720 H.264 CRF 30, from ${CLIP.split('/').pop()}`)
-  console.log(`\nffmpeg: ${(await findFfmpeg()) ?? 'not found — the loop would ship at source size'}`)
+  console.log(`\nffmpeg: ${FFMPEG ?? 'NOT FOUND'}`)
+  if (!FFMPEG) {
+    console.log(`  Without one the poster is encoded by Chromium instead (CHROME=${EXEC}),`)
+    console.log(`  and the loop ships at source size. Install with:  npm i --no-save ffmpeg-static`)
+  }
   process.exit(0)
 }
 
@@ -108,14 +116,26 @@ await mkdir(OUT, { recursive: true })
 const platePath = join(TMP, 'wa-cover-plate.png')
 console.log(`plate   ${mb(await download(PLATE, platePath))}  source PNG`)
 
-const browser = await chromium.launch({ executablePath: EXEC })
-const page = await browser.newPage({ viewport: { width: 1600, height: 893 }, deviceScaleFactor: 1 })
-await page.goto(`file://${platePath.split('\\').join('/')}`)
-await page.addStyleTag({ content: 'html,body{margin:0;background:#03121b}img{width:1600px;height:893px;display:block;object-fit:cover}' })
-await page.waitForTimeout(400)
-await page.screenshot({ path: join(OUT, 'hero-water-poster.jpg'), type: 'jpeg', quality: 74 })
-await browser.close()
-console.log(`poster  ${mb(await sizeOf(join(OUT, 'hero-water-poster.jpg')))}  1600x893 JPEG`)
+const posterPath = join(OUT, 'hero-water-poster.jpg')
+if (FFMPEG) {
+  await run(FFMPEG, ['-y', '-i', platePath, '-vf', 'scale=1600:-2:flags=lanczos', '-q:v', '4', posterPath])
+  console.log(`poster  ${mb(await sizeOf(posterPath))}  1600x893 JPEG (ffmpeg)`)
+} else {
+  // No ffmpeg: the browser the other tools here already use encodes a perfectly
+  // good JPEG. pathToFileURL, not string concatenation — on Windows a hand-built
+  // "file://C:/..." puts the drive letter in the host position and will not load.
+  const chromium = await chromiumLazy()
+  const browser = await chromium.launch({ executablePath: EXEC }).catch((e) => {
+    throw new Error(`No ffmpeg, and Chromium would not start.\n  Tried: ${EXEC}\n  Either set CHROME to a Chrome/Chromium binary, or run: npm i --no-save ffmpeg-static\n  (${e.message.split('\n')[0]})`)
+  })
+  const page = await browser.newPage({ viewport: { width: 1600, height: 893 }, deviceScaleFactor: 1 })
+  await page.goto(pathToFileURL(platePath).href)
+  await page.addStyleTag({ content: 'html,body{margin:0;background:#03121b}img{width:1600px;height:893px;display:block;object-fit:cover}' })
+  await page.waitForTimeout(400)
+  await page.screenshot({ path: posterPath, type: 'jpeg', quality: 74 })
+  await browser.close()
+  console.log(`poster  ${mb(await sizeOf(posterPath))}  1600x893 JPEG (browser)`)
+}
 
 // ---- loop video -----------------------------------------------------------
 // Shipped at 720p: it sits behind a scrim at 55% opacity and is never the
@@ -125,14 +145,13 @@ console.log(`poster  ${mb(await sizeOf(join(OUT, 'hero-water-poster.jpg')))}  16
 const clipPath = join(TMP, 'wa-cover-clip.mp4')
 console.log(`clip    ${mb(await download(CLIP, clipPath))}  source MP4`)
 
-const ffmpeg = await findFfmpeg()
-if (!ffmpeg) {
+if (!FFMPEG) {
   const { copyFile } = await import('node:fs/promises')
   await copyFile(clipPath, join(OUT, 'hero-water-loop.mp4'))
   console.log(`video   ${mb(await sizeOf(join(OUT, 'hero-water-loop.mp4')))}  SOURCE SIZE — no ffmpeg found`)
-  console.log(`\n        Install one (npm i -D ffmpeg-static) and re-run to cut this down.`)
+  console.log(`\n        Install one (npm i --no-save ffmpeg-static) and re-run to cut this down.`)
 } else {
-  await run(ffmpeg, [
+  await run(FFMPEG, [
     '-y', '-i', clipPath,
     '-an',                                  // decorative, and it autoplays
     '-vf', 'scale=1280:-2:flags=lanczos',
@@ -146,4 +165,3 @@ if (!ffmpeg) {
 }
 
 console.log(`\nDone. Run \`npm run verify\` — it should go back to zero unresolved references.`)
-await access(join(OUT, 'hero-water-poster.jpg'))

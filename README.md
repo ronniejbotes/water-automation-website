@@ -43,9 +43,13 @@ water plate and an 8-second loop behind the hero. They live outside the mirror's
 source, so they have their own fetch:
 
 ```bash
-npm run cover:media:dry   # what it would write, and whether ffmpeg was found
-npm run cover:media       # download, encode the poster, re-encode the loop
+npm i --no-save ffmpeg-static   # optional; it does both encodes on its own
+npm run cover:media:dry         # what it would write, and what it found to encode with
+npm run cover:media             # download, encode the poster, re-encode the loop
 ```
+
+Without an ffmpeg it still works: the poster is encoded by the same Chromium the
+other browser tools use (`CHROME`), and the loop ships at source size.
 
 `tools/fetch-cover-media.mjs` records where those two files came from. Until it has
 been run, `npm run verify` names both paths as unresolved and the cover renders from
