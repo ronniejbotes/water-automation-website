@@ -9,6 +9,8 @@
     "mirror": "node tools/mirror-browser.mjs",
     "mirror:checkout": "node tools/capture-checkout.mjs",
     "assets": "node tools/fetch-assets.mjs",
+    "cover:media": "node tools/fetch-cover-media.mjs",
+    "cover:media:dry": "node tools/fetch-cover-media.mjs --dry",
     "fix": "node tools/apply-fixes.mjs",
     "fix:dry": "node tools/apply-fixes.mjs --dry",
     "serve": "node tools/serve.mjs",

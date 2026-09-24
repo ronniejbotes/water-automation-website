@@ -38,6 +38,19 @@ npm install
 npm run serve     # http://localhost:4400 — serves this repo the way production will
 ```
 
+The homepage cover carries two generated files that are not part of the capture — a
+water plate and an 8-second loop behind the hero. They live outside the mirror's
+source, so they have their own fetch:
+
+```bash
+npm run cover:media:dry   # what it would write, and whether ffmpeg was found
+npm run cover:media       # download, encode the poster, re-encode the loop
+```
+
+`tools/fetch-cover-media.mjs` records where those two files came from. Until it has
+been run, `npm run verify` names both paths as unresolved and the cover renders from
+its gradient and ripple layer, which is a complete state rather than a broken one.
+
 `tools/serve.mjs` does what a static host does: directory indexes, `404.html` with a real
 404 status, byte ranges for the videos, and a replay of `_redirects`. If it works there, it
 works on Netlify, Cloudflare Pages, Vercel, GitHub Pages, Apache or nginx.
