@@ -112,8 +112,14 @@ const EXPECTED_ABSENT = [
   // They are directories, not resources. The extractor cannot tell them from a
   // file path, so they are excused here — an extension-less /wp-content/ path
   // is always one of these.
-  /^\/wp-(?:content|includes)\/[^?#]*[^/.]$/,
-  /^\/wp-(?:content|includes)\/[^?#]*\/$/,
+  //
+  // The dot has to be excluded from the LAST SEGMENT, not just from the final
+  // character. `[^?#]*[^/.]$` reads as "no dot at the end", but `[^?#]*` matches
+  // dots quite happily, so it also excused /wp-content/uploads/.../anything.png
+  // — every missing upload on the site, silently, which is the one thing this
+  // check exists to find. Anchoring the exemption to a final segment with no dot
+  // in it keeps the directory URLs excused and puts the files back in scope.
+  /^\/wp-(?:content|includes)\/(?:[^?#]*\/)?[^/.?#]*$/,
 ]
 const redirectPaths = new Set()
 try {

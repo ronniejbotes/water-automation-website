@@ -1,0 +1,590 @@
+<style id="wa-cover-style">
+/*
+ * The homepage cover.
+ *
+ * What was there before: a bright, full-strength photograph of a sunlit office
+ * park with dark-grey italic body copy, green sub-heading and a small green pill
+ * laid directly over it. The container carried a 97%-opaque white overlay that
+ * never landed, and the "glass" card over the photo was white at 17% — invisible
+ * against a bright image. So the hero's own proof copy sat at roughly 2:1 against
+ * foliage and glazing, the green sub-heading sat on green trees, and on a 390px
+ * screen the eyebrow rendered at 38px grey and outweighed the headline it was
+ * introducing.
+ *
+ * What replaces it: the same words, on a dark water plate that the type is
+ * guaranteed to read against. Every colour pairing below clears WCAG AA at its
+ * size, and the scrim is what makes that true regardless of which frame of the
+ * video is showing.
+ *
+ * Scope: this file styles the homepage cover and nothing else. It is injected
+ * before </head> on index.html only — no other page carries it and no shared
+ * stylesheet is touched, so the rest of the site is byte-for-byte what it was.
+ *
+ * Brand: colours are the kit's own globals, not new ones. #59B748 is
+ * --e-global-color-accent, #4898C4 is --e-global-color-9705123, and the type is
+ * GT Eesti Display Trial, already loaded by the theme.
+ */
+
+:root {
+	--wa-ink: #f4faff;
+	--wa-ink-soft: rgba(244, 250, 255, 0.82);
+	--wa-ink-faint: rgba(244, 250, 255, 0.62);
+	--wa-green: #59b748;
+	--wa-green-lift: #7bd46a;
+	--wa-teal: #4fc3a1;
+	--wa-blue: #4898c4;
+	--wa-deep: #041a26;
+}
+
+/* ---- The container ------------------------------------------------------ */
+/*
+ * Matched to Elementor's own selector so it wins on source order rather than on
+ * an !important — the inline <style> resolves after every linked stylesheet in
+ * the head, so equal specificity is enough and stays overridable from the editor
+ * later if this is ever rebuilt in Elementor.
+ */
+.elementor-3668 .elementor-element.elementor-element-d44cab7 {
+	--min-height: 0px;
+	--padding-top: 0px;
+	--padding-bottom: 0px;
+	--padding-left: 0px;
+	--padding-right: 0px;
+	--overlay-opacity: 0;
+	overflow: hidden;
+	isolation: isolate;
+}
+
+.elementor-3668 .elementor-element.elementor-element-d44cab7:not(.elementor-motion-effects-element-type-background),
+.elementor-3668 .elementor-element.elementor-element-d44cab7 > .elementor-motion-effects-container > .elementor-motion-effects-layer {
+	background-color: var(--wa-deep);
+	background-image:
+		radial-gradient(105% 78% at 76% 2%, rgba(86, 178, 224, 0.42) 0%, rgba(86, 178, 224, 0) 56%),
+		radial-gradient(88% 72% at 8% 100%, rgba(89, 183, 72, 0.32) 0%, rgba(89, 183, 72, 0) 58%),
+		radial-gradient(64% 46% at 50% 118%, rgba(79, 195, 161, 0.3) 0%, rgba(79, 195, 161, 0) 70%),
+		linear-gradient(168deg, #07324a 0%, #051f2d 48%, #03121b 100%);
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+/* The captured white wash. It was doing nothing useful over the photograph and
+   would grey out the water plate, so it is removed rather than re-tuned. */
+.elementor-3668 .elementor-element.elementor-element-d44cab7::before,
+.elementor-3668 .elementor-element.elementor-element-d44cab7 > .e-con-inner::before {
+	content: none;
+}
+
+/* ---- Layout ------------------------------------------------------------- */
+.wa-cover {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: min(720px, 100svh);
+	gap: 0;
+	color: var(--wa-ink);
+	font-family: "GT Eesti Display Trial", sans-serif;
+}
+
+/*
+ * Width, padding and alignment need the container in the selector: Elementor
+ * boxes .e-con-inner with `.e-con-boxed > .e-con-inner`, and sets the inner's
+ * padding and text-align from the container, both of which outrank a lone class.
+ * Matching its shape rather than reaching for !important keeps this overridable.
+ */
+.elementor-3668 .elementor-element.elementor-element-d44cab7 > .wa-cover {
+	width: 100%;
+	max-width: none;
+	padding: clamp(44px, 4.6vw, 62px) clamp(20px, 5vw, 64px) clamp(52px, 4.8vw, 68px);
+	text-align: center;
+}
+
+/* ---- Media plate -------------------------------------------------------- */
+.wa-cover__media {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	overflow: hidden;
+}
+
+.wa-cover__video {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	/* Dark enough that the scrim only has to finish the job, bright enough that
+	   the water still reads as water. */
+	opacity: 0.55;
+	background: transparent;
+	border: 0;
+}
+
+/*
+ * The scrim is the contrast guarantee. The panel sits in the middle of the
+ * frame, so the centre is darkened hardest and the edges are allowed to keep
+ * some of the plate's detail.
+ */
+.wa-cover__scrim {
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(76% 64% at 50% 46%, rgba(3, 16, 24, 0.34) 0%, rgba(3, 16, 24, 0.74) 66%, rgba(3, 16, 24, 0.93) 100%),
+		linear-gradient(180deg, rgba(3, 16, 24, 0.7) 0%, rgba(3, 16, 24, 0.22) 32%, rgba(3, 16, 24, 0.88) 100%);
+}
+
+/* Ripple rings, spreading from a point below the panel. Three of them on a
+   nine-second cycle, staggered, so there is almost always exactly one visible. */
+.wa-cover__ripples span {
+	position: absolute;
+	left: 50%;
+	top: 64%;
+	width: 18px;
+	height: 18px;
+	margin: -9px 0 0 -9px;
+	border: 1px solid rgba(150, 216, 255, 0.5);
+	border-radius: 50%;
+	opacity: 0;
+	animation: wa-ripple 9s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+	will-change: transform, opacity;
+}
+.wa-cover__ripples span:nth-child(2) { animation-delay: 3s; }
+.wa-cover__ripples span:nth-child(3) { animation-delay: 6s; }
+
+@keyframes wa-ripple {
+	0%   { transform: scale(0.2); opacity: 0; }
+	9%   { opacity: 0.5; }
+	100% { transform: scale(36); opacity: 0; }
+}
+
+/* Falling droplets. Seven, each with its own lane, delay and pace so the loop
+   never lines up and reads as a pattern. */
+.wa-cover__drops span {
+	position: absolute;
+	top: -6%;
+	width: 1.5px;
+	height: 22px;
+	border-radius: 2px;
+	background: linear-gradient(180deg, rgba(174, 226, 255, 0) 0%, rgba(174, 226, 255, 0.45) 100%);
+	filter: blur(0.3px);
+	opacity: 0;
+	animation: wa-drop 7s linear infinite;
+	will-change: transform, opacity;
+}
+.wa-cover__drops span:nth-child(1) { left: 8%;  animation-duration: 6.5s; animation-delay: 0s; }
+.wa-cover__drops span:nth-child(2) { left: 21%; animation-duration: 8.2s; animation-delay: 2.4s; }
+.wa-cover__drops span:nth-child(3) { left: 37%; animation-duration: 7.1s; animation-delay: 4.9s; }
+.wa-cover__drops span:nth-child(4) { left: 55%; animation-duration: 9.0s; animation-delay: 1.3s; }
+.wa-cover__drops span:nth-child(5) { left: 69%; animation-duration: 6.8s; animation-delay: 5.6s; }
+.wa-cover__drops span:nth-child(6) { left: 83%; animation-duration: 8.6s; animation-delay: 3.1s; }
+.wa-cover__drops span:nth-child(7) { left: 94%; animation-duration: 7.6s; animation-delay: 6.4s; }
+
+@keyframes wa-drop {
+	0%   { transform: translateY(0); opacity: 0; }
+	14%  { opacity: 0.6; }
+	86%  { opacity: 0.3; }
+	100% { transform: translateY(78vh); opacity: 0; }
+}
+
+/* ---- The panel ---------------------------------------------------------- */
+/*
+ * Keeps the captured card's DNA — 30px radius, a lit top-left edge, a wide inset
+ * white glow — but at an opacity that actually shows up, because the plate behind
+ * it is now dark.
+ */
+.wa-cover__panel {
+	position: relative;
+	z-index: 1;
+	width: 100%;
+	max-width: 830px;
+	padding: clamp(28px, 3vw, 42px) clamp(22px, 3.6vw, 52px) clamp(26px, 2.6vw, 34px);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-top-color: rgba(255, 255, 255, 0.3);
+	border-left-color: rgba(255, 255, 255, 0.22);
+	border-radius: 30px;
+	background: linear-gradient(150deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 46%, rgba(255, 255, 255, 0.055) 100%);
+	-webkit-backdrop-filter: blur(16px) saturate(150%);
+	backdrop-filter: blur(16px) saturate(150%);
+	box-shadow:
+		0 40px 90px -34px rgba(0, 0, 0, 0.85),
+		inset 0 1px 0 rgba(255, 255, 255, 0.18),
+		inset 0 0 91px 70px rgba(255, 255, 255, 0.035);
+}
+
+/* ---- Eyebrow ------------------------------------------------------------ */
+/*
+ * Still an <h4>, so the document outline is unchanged from the capture, but no
+ * longer 38px grey on a phone. A live pip carries the eye to it without needing
+ * size to do the work.
+ */
+.wa-cover .wa-cover__eyebrow {
+	display: inline-block;
+	margin: 0 0 clamp(14px, 1.7vw, 19px);
+	font-family: inherit;
+	font-size: clamp(10.5px, 1.05vw, 12.5px);
+	font-weight: 500;
+	line-height: 1.4;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: rgba(244, 250, 255, 0.72);
+}
+
+.wa-cover__pip {
+	position: relative;
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	margin-right: 9px;
+	vertical-align: 1px;
+	border-radius: 50%;
+	background: var(--wa-green-lift);
+	box-shadow: 0 0 0 0 rgba(123, 212, 106, 0.55);
+	animation: wa-pip 2.6s ease-out infinite;
+}
+
+@keyframes wa-pip {
+	0%   { box-shadow: 0 0 0 0 rgba(123, 212, 106, 0.5); }
+	70%  { box-shadow: 0 0 0 9px rgba(123, 212, 106, 0); }
+	100% { box-shadow: 0 0 0 0 rgba(123, 212, 106, 0); }
+}
+
+/* ---- Headline ----------------------------------------------------------- */
+.wa-cover .wa-cover__title {
+	margin: 0;
+	font-family: inherit;
+	/* 400 and the same proportions as the captured headline, only fluid, so it
+	   cannot overflow its card the way the 81.95px fixed size did. */
+	font-weight: 400;
+	font-size: clamp(2.25rem, 5.5vw, 4.4rem);
+	line-height: 1.04;
+	letter-spacing: -0.015em;
+	color: #ffffff;
+	text-wrap: balance;
+}
+
+.wa-cover__mark {
+	position: relative;
+	display: inline-block;
+	white-space: nowrap;
+	background: linear-gradient(94deg, #8fe07c 0%, var(--wa-green) 46%, var(--wa-teal) 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	-webkit-text-fill-color: transparent;
+	filter: drop-shadow(0 0 26px rgba(89, 183, 72, 0.32));
+}
+
+/* The brand's underline swoosh, drawn once on load instead of by the Elementor
+   animated-headline widget's runtime SVG. Same gesture, no JS dependency. */
+.wa-cover__underline {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -0.1em;
+	width: 100%;
+	height: 0.22em;
+	overflow: visible;
+	fill: none;
+	stroke: var(--wa-green);
+	stroke-width: 5;
+	stroke-linecap: round;
+	vector-effect: non-scaling-stroke;
+	filter: drop-shadow(0 2px 10px rgba(89, 183, 72, 0.45));
+}
+
+.wa-cover__underline path {
+	stroke-dasharray: 320;
+	stroke-dashoffset: 320;
+	animation: wa-draw 1.15s cubic-bezier(0.65, 0, 0.35, 1) 0.35s forwards;
+}
+
+@keyframes wa-draw {
+	to { stroke-dashoffset: 0; }
+}
+
+/* ---- Copy --------------------------------------------------------------- */
+.wa-cover .wa-cover__lede {
+	max-width: 44ch;
+	margin: clamp(15px, 1.8vw, 21px) auto 0;
+	font-family: inherit;
+	font-size: clamp(1rem, 1.45vw, 1.3rem);
+	font-weight: 400;
+	font-style: normal;
+	line-height: 1.42;
+	letter-spacing: 0;
+	color: var(--wa-ink);
+}
+
+.wa-cover .wa-cover__body {
+	max-width: 62ch;
+	margin: clamp(11px, 1.3vw, 15px) auto 0;
+	font-family: inherit;
+	font-size: clamp(0.9rem, 1.1vw, 1rem);
+	/* The capture set this italic. Three lines of italic over a photograph was
+	   most of why it was hard to read; upright at 82% white is not. */
+	font-style: normal;
+	font-weight: 400;
+	line-height: 1.62;
+	color: var(--wa-ink-soft);
+}
+
+.wa-cover .wa-cover__body a {
+	color: #ffffff;
+	font-weight: 500;
+	text-decoration: underline;
+	text-decoration-color: rgba(123, 212, 106, 0.75);
+	text-underline-offset: 3px;
+	text-decoration-thickness: 1.5px;
+	transition: text-decoration-color 0.2s ease, color 0.2s ease;
+}
+.wa-cover .wa-cover__body a:hover,
+.wa-cover .wa-cover__body a:focus-visible {
+	color: var(--wa-green-lift);
+	text-decoration-color: var(--wa-green-lift);
+}
+
+/* ---- Calls to action ---------------------------------------------------- */
+.wa-cover__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	margin-top: clamp(22px, 2.4vw, 28px);
+}
+
+.wa-cover .wa-cover__cta {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	padding: 14px 28px;
+	border: 1px solid transparent;
+	border-radius: 50px;
+	background: linear-gradient(180deg, #66c953 0%, #4ea83f 100%);
+	color: #ffffff;
+	font-family: inherit;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1;
+	letter-spacing: 0.01em;
+	text-decoration: none;
+	box-shadow:
+		0 14px 30px -12px rgba(89, 183, 72, 0.65),
+		inset 0 1px 0 rgba(255, 255, 255, 0.3);
+	transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+}
+
+.wa-cover .wa-cover__cta svg {
+	width: 16px;
+	height: 16px;
+	flex: 0 0 auto;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	transition: transform 0.22s ease;
+}
+
+.wa-cover .wa-cover__cta:hover,
+.wa-cover .wa-cover__cta:focus-visible {
+	transform: translateY(-2px);
+	box-shadow:
+		0 20px 38px -12px rgba(89, 183, 72, 0.75),
+		inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+.wa-cover .wa-cover__cta:hover svg,
+.wa-cover .wa-cover__cta:focus-visible svg { transform: translateX(3px); }
+
+.wa-cover .wa-cover__cta--ghost {
+	background: rgba(255, 255, 255, 0.07);
+	border-color: rgba(255, 255, 255, 0.26);
+	color: var(--wa-ink);
+	box-shadow: none;
+}
+.wa-cover .wa-cover__cta--ghost:hover,
+.wa-cover .wa-cover__cta--ghost:focus-visible {
+	background: rgba(255, 255, 255, 0.14);
+	border-color: rgba(255, 255, 255, 0.42);
+	box-shadow: none;
+}
+
+/* A visible ring on both buttons and both links, because the dark plate makes
+   the browser default all but invisible. */
+.wa-cover a:focus-visible {
+	outline: 2px solid #9fe58f;
+	outline-offset: 3px;
+}
+
+/* ---- Proof chips -------------------------------------------------------- */
+/*
+ * The same four claims the captured hero made in its third paragraph and its
+ * body copy, laid out to be scanned instead of read. Nothing new is asserted
+ * here: Chubb, the ten minutes, "no plumber, no pipe cutting" and who it is
+ * trusted by are all already in the copy above.
+ */
+.wa-cover__proof {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	/* Four chips cannot share a row inside an 830px panel, and a greedy wrap
+	   leaves the fourth stranded on its own. Capped so it breaks 2 + 2, with the
+	   two rows within ~10px of each other in width. */
+	max-width: 470px;
+	text-align: center;
+	margin: clamp(20px, 2.3vw, 26px) auto 0;
+	padding: 0;
+	list-style: none;
+}
+
+.wa-cover__proof li {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 9px 15px;
+	border: 1px solid rgba(255, 255, 255, 0.13);
+	border-radius: 50px;
+	background: rgba(255, 255, 255, 0.055);
+	font-size: 12.5px;
+	font-weight: 400;
+	line-height: 1.2;
+	letter-spacing: 0.01em;
+	color: rgba(244, 250, 255, 0.84);
+}
+
+.wa-cover__proof svg {
+	width: 14px;
+	height: 14px;
+	flex: 0 0 auto;
+	fill: none;
+	stroke: var(--wa-green-lift);
+	stroke-width: 1.9;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+/* ---- Scroll cue --------------------------------------------------------- */
+.wa-cover .wa-cover__scroll {
+	position: absolute;
+	z-index: 1;
+	bottom: clamp(16px, 2vw, 24px);
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 8px 7px 14px;
+	border-radius: 50px;
+	color: var(--wa-ink-faint);
+	font-size: 11px;
+	font-weight: 400;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+.wa-cover .wa-cover__scroll:hover { color: var(--wa-ink); }
+
+.wa-cover__scroll svg {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	animation: wa-bob 2.4s ease-in-out infinite;
+}
+
+@keyframes wa-bob {
+	0%, 100% { transform: translateY(0); }
+	50%      { transform: translateY(4px); }
+}
+
+/* ---- Tablet ------------------------------------------------------------- */
+@media (max-width: 1024px) {
+	.wa-cover { min-height: 0; }
+	.wa-cover__panel { max-width: 700px; }
+}
+
+/* ---- Phones ------------------------------------------------------------- */
+/*
+ * No video below 900px — the script never sets a src, so the poster is the
+ * plate. The panel loses its border radius inset and most of its padding, and
+ * the chips drop to the two that a phone has room to read at a glance.
+ */
+@media (max-width: 767px) {
+	.wa-cover { min-height: 0; }
+
+	.elementor-3668 .elementor-element.elementor-element-d44cab7 > .wa-cover {
+		padding: 52px 16px 66px;
+	}
+
+	.wa-cover__panel {
+		padding: 26px 20px 30px;
+		border-radius: 24px;
+	}
+
+	.wa-cover .wa-cover__eyebrow {
+		margin-bottom: 14px;
+		font-size: 10px;
+		letter-spacing: 0.13em;
+	}
+
+	.wa-cover .wa-cover__title { font-size: clamp(2rem, 9.4vw, 2.7rem); }
+
+	.wa-cover .wa-cover__lede { font-size: 1.02rem; margin-top: 16px; }
+
+	.wa-cover .wa-cover__body { font-size: 0.875rem; line-height: 1.58; }
+
+	.wa-cover__actions { margin-top: 22px; gap: 10px; }
+
+	.wa-cover .wa-cover__cta {
+		justify-content: center;
+		width: 100%;
+		padding: 15px 22px;
+	}
+
+	.wa-cover__proof { gap: 6px; margin-top: 22px; }
+	.wa-cover__proof li { padding: 8px 12px; font-size: 11.5px; }
+	/* Three chips fit two tidy rows on a phone. The one dropped is the longest
+	   and the least specific — the other three are the differentiators. */
+	.wa-cover__proof li:nth-child(2) { display: none; }
+
+	/* Two rings instead of three, and no falling droplets: on a phone they are
+	   under the panel for most of their travel and only cost battery. */
+	.wa-cover__ripples span:nth-child(3),
+	.wa-cover__drops { display: none; }
+
+	/* The cart pill is fixed bottom-right and was landing on the hero copy. The
+	   cue is the only cover element near it, so it steps aside rather than the
+	   pill being moved. */
+	.wa-cover .wa-cover__scroll { bottom: 14px; }
+	.wa-cover .wa-cover__scroll span { display: none; }
+}
+
+/* ---- Reduced motion ----------------------------------------------------- */
+/*
+ * Everything that moves here is decoration, so under a reduced-motion
+ * preference it all stops and nothing is lost. The script checks the same query
+ * before it loads the video, so the plate stays a still image too.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.wa-cover__ripples span,
+	.wa-cover__drops span,
+	.wa-cover__pip,
+	.wa-cover__scroll svg,
+	.wa-cover__underline path {
+		animation: none !important;
+	}
+	.wa-cover__underline path { stroke-dashoffset: 0; }
+	.wa-cover__ripples span,
+	.wa-cover__drops span { opacity: 0; }
+	.wa-cover .wa-cover__cta { transition: none; }
+}
+</style>

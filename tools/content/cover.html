@@ -1,0 +1,47 @@
+					<div class="e-con-inner wa-cover">
+		<div class="wa-cover__media" aria-hidden="true">
+			<video class="wa-cover__video" autoplay muted loop playsinline preload="none" tabindex="-1" poster="/wp-content/uploads/2026/09/hero-water-poster.jpg" data-src="/wp-content/uploads/2026/09/hero-water-loop.mp4"></video>
+			<div class="wa-cover__scrim"></div>
+			<div class="wa-cover__ripples"><span></span><span></span><span></span></div>
+			<div class="wa-cover__drops"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+		</div>
+		<div class="wa-cover__panel">
+			<h4 class="wa-cover__eyebrow"><span class="wa-cover__pip"></span>Assembled and Patented in the USA</h4>
+			<h4 class="wa-cover__title">Stop <span class="wa-cover__mark">Water&nbsp;Damage<svg class="wa-cover__underline" viewBox="0 0 300 18" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M4,12.5 C58,5.2 134,2.4 205,4.8 C245,6.2 276,8.8 296,12.2" /></svg></span> Before It Starts.</h4>
+			<h4 class="wa-cover__lede">Automatic Water Leak Detection for Commercial Buildings, Apartment Complexes &amp; Property Managers.</h4>
+			<p class="wa-cover__body"><a href="/contact-us/"><strong>aquaHALT</strong></a> is the only Chubb-vetted, award-winning automatic water shutoff system that installs at fixture level — no pipe cutting, no plumber, no electrician. Deploy across every toilet, sink, and ice maker in your building in under 10 minutes per unit.</p>
+			<div class="wa-cover__actions">
+				<a class="wa-cover__cta" href="/buy-now/">Request Bulk Pricing<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" /></svg></a>
+				<a class="wa-cover__cta wa-cover__cta--ghost" href="/#competitor-stats">See how it compares</a>
+			</div>
+			<ul class="wa-cover__proof">
+				<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>Installs at fixture level</li>
+				<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>Trusted by property managers &amp; insurers</li>
+				<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>Under 10 minutes per unit</li>
+				<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>No plumber, no electrician</li>
+			</ul>
+		</div>
+		<a class="wa-cover__scroll" href="#competitor-stats"><span>The cost of inaction</span><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 6l4 4 4-4" /></svg></a>
+		<script>
+		/* Hold the hero video back until the page is idle, and never load it at all
+		   where it would cost more than it gives: phones and small tablets (the poster
+		   carries the design on its own), Data Saver, and reduced-motion. The poster
+		   attribute renders with no src set, so doing nothing here is a complete,
+		   intended state rather than a fallback. */
+		(function () {
+			var v = document.querySelector('.wa-cover__video')
+			if (!v || !v.dataset.src || !window.matchMedia) return
+			if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+			if (window.matchMedia('(max-width: 900px)').matches) return
+			if (navigator.connection && navigator.connection.saveData) return
+			var start = function () {
+				v.src = v.dataset.src
+				v.load()
+				var played = v.play()
+				if (played && played.catch) played.catch(function () {})
+			}
+			if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 2500 })
+			else setTimeout(start, 1200)
+		})()
+		</script>
+					</div>

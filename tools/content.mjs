@@ -565,4 +565,82 @@ const TABLE_MOBILE = [
   },
 ]
 
-export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE]
+// ---------------------------------------------------------------------------
+// The homepage cover
+// ---------------------------------------------------------------------------
+//
+// NEEDS-OK. Per SEO-STATUS.md, anything carrying a number or a credential is
+// approved by a person before it ships, and the proof chips carry Chubb, TIME
+// and "under 10 minutes per unit". None of it is new — every one of those claims
+// is already in the hero copy this replaces, and no figure is changed — but the
+// hero is where they are stated, so the layout change wants a sign-off.
+//
+// Deliberately NOT changed, so this stays a cover redesign and not an SEO edit:
+// the headline wording, the lede, the body paragraph and its /contact-us/ link
+// are verbatim from the capture; the three <h4>s are still three <h4>s at the
+// same level, so the document outline is identical. The homepage's only <h1> is
+// still "Where and how to order the product", which is the wrong element to be
+// carrying it — that is a real defect, but it belongs to the SEO programme's
+// task list, not to a redesign, so it is left alone and flagged.
+
+const COVER = [
+  {
+    id: 'cover-style',
+    kind: 'insert',
+    files: ['index.html'],
+    anchor: '</head>',
+    position: 'before',
+    htmlFile: 'content/cover-style.html',
+    why: `
+      The cover's stylesheet, inlined into the homepage head the same way
+      overlay-hygiene is, rather than added as a file. A new stylesheet would
+      need a route, a .htaccess exemption and an entry in the asset manifest to
+      survive \`npm run verify\`, and it would cost a round trip in front of the
+      LCP element to save nothing — this is 9KB that only one page wants.
+
+      It resolves after every linked stylesheet in the head, so it can match
+      Elementor's own selectors and win on source order instead of on
+      !important. That matters if this section is ever rebuilt in Elementor:
+      nothing here has to be un-picked first.`,
+  },
+  {
+    id: 'cover',
+    kind: 'replace',
+    files: ['index.html'],
+    fromFile: 'content/cover-captured.html',
+    toFile: 'content/cover.html',
+    expect: 1,
+    why: `
+      The captured cover puts dark-grey italic body copy, a green sub-heading and
+      a small green pill directly over a bright, full-strength photograph of a
+      sunlit office park. The container does carry a 97%-opaque white overlay,
+      but it never lands, and the card meant to hold the text is white at 17% —
+      invisible over a bright image. So the proof paragraph runs at roughly 2:1
+      against foliage and glazing, and "Automatic Water Leak Detection for
+      Commercial Buildings..." is set in green over green trees. On a 390px
+      screen the eyebrow renders at 38px grey and outweighs the headline it is
+      introducing, and the fixed 81.95px headline overflows the card it sits in.
+
+      Replaced with the same words on a dark water plate, so the type is legible
+      by construction rather than by luck: a scrim guarantees the contrast
+      whatever frame of the video is showing, the fixed sizes become clamps that
+      cannot overflow, and the italics come off the body copy.
+
+      What is genuinely new is structural, not editorial: a second, lower-commitment
+      call to action next to "Request Bulk Pricing" — the captured hero offers a
+      visitor who is not ready to ask for bulk pricing nothing at all — and the
+      four proof chips, which restate claims already made in the paragraph above
+      them in a form that survives being skimmed.
+
+      The media is a generated water plate, not a photograph of the product, and
+      it is decorative: aria-hidden, no src on the video until the page is idle,
+      no video at all below 900px or under a reduced-motion or Data Saver
+      preference, where the poster is the whole design. If neither asset is
+      present the gradients and the ripple layer still carry it.
+
+      Nothing outside this container is touched. The checkout, the cart, the
+      forms, the header and every other page are exactly as they were.`,
+  },
+]
+
+export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...COVER]

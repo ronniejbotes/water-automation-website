@@ -50,15 +50,27 @@ const close = (id) => `<!-- /wa:content:${id} -->`
 // a spec table is easier to edit as HTML than as a JS string, and it keeps
 // content.mjs readable as a list of decisions rather than a wall of markup.
 const BLOCK_DIR = resolve(dirname(fileURLToPath(import.meta.url)))
+const fileSource = (block, key, rel) => {
+  const p = join(BLOCK_DIR, rel)
+  if (!existsSync(p)) throw new Error(`${block.id}: ${key} not found — ${rel}`)
+  return readFileSync(p, 'utf8').trimEnd()
+}
 const markupFor = (block) => {
   if (block.html != null) return block.html
-  if (block.htmlFile) {
-    const p = join(BLOCK_DIR, block.htmlFile)
-    if (!existsSync(p)) throw new Error(`${block.id}: htmlFile not found — ${block.htmlFile}`)
-    return readFileSync(p, 'utf8').trimEnd()
-  }
+  if (block.htmlFile) return fileSource(block, 'htmlFile', block.htmlFile)
   throw new Error(`${block.id}: needs either html or htmlFile`)
 }
+
+// A replacement gets the same choice as an insert. Either side can live in its
+// own file, which is what makes swapping a whole section of captured markup
+// readable: the two files diff against each other as HTML, and content.mjs keeps
+// carrying the decision rather than the markup. `fromFile` is also the guard —
+// it is the capture verbatim, so if the capture moves, it stops matching and the
+// run aborts instead of half-applying.
+const replaceSides = (block) => [
+  block.from != null ? block.from : fileSource(block, 'fromFile', block.fromFile),
+  block.to != null ? block.to : fileSource(block, 'toFile', block.toFile),
+]
 
 const edits = new Map() // absolute path -> new content
 const report = []
@@ -143,7 +155,8 @@ for (const block of CONTENT) {
       edits.set(abs, html)
       applied++
     } else if (block.kind === 'replace') {
-      const hits = html.split(block.from).length - 1
+      const [from, to] = replaceSides(block)
+      const hits = html.split(from).length - 1
       if (hits === 0) {
         // A sitewide replace runs against every page, and most pages will not
         // contain the string — that is normal, not a fault. Only a replace aimed
@@ -151,11 +164,11 @@ for (const block of CONTENT) {
         if (block.allHtml) { absent++; continue }
         // Either already applied, or the capture moved underneath it. Those are
         // very different situations, so tell them apart rather than guessing.
-        if (html.includes(block.to)) already++
+        if (html.includes(to)) already++
         else problems.push(`${rel}: neither the original nor the replacement is present`)
         continue
       }
-      html = html.split(block.from).join(block.to)
+      html = html.split(from).join(to)
       edits.set(abs, html)
       applied += hits
     } else {
