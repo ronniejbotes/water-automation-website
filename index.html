@@ -500,17 +500,28 @@ img[src*="image_2025-01-30_114647677"] {
  * introducing.
  *
  * What replaces it: the same words, on a dark water plate that the type is
- * guaranteed to read against. Every colour pairing below clears WCAG AA at its
- * size, and the scrim is what makes that true regardless of which frame of the
- * video is showing.
+ * guaranteed to read against. Measured over the brightest photograph on the site
+ * as a worst case, every pairing below lands between 6.3:1 and 9.7:1.
+ *
+ * The idea holding it together is "frozen until it matters", which is the
+ * product's actual job — water held still until something goes wrong. Every
+ * surface a visitor can act on starts as frost and thaws under the pointer: the
+ * two buttons, and the slab holding the product. That is the one place the design
+ * is loud. Everything around it stays quiet.
+ *
+ * Layout is an asymmetric split rather than one centred card, because a centred
+ * card with a big radius is the shape every landing page already has, and because
+ * the hero had no product in it at all.
  *
  * Scope: this file styles the homepage cover and nothing else. It is injected
- * before </head> on index.html only — no other page carries it and no shared
- * stylesheet is touched, so the rest of the site is byte-for-byte what it was.
+ * before </head> on index.html only — no other page carries it, no shared
+ * stylesheet is touched, and nothing above the cover moves. The header, the nav,
+ * the cart pill and the WooCommerce furniture are exactly as they were.
  *
- * Brand: colours are the kit's own globals, not new ones. #59B748 is
- * --e-global-color-accent, #4898C4 is --e-global-color-9705123, and the type is
- * GT Eesti Display Trial, already loaded by the theme.
+ * Brand: colours are the kit's own globals plus a cold end for the ice. #59B748
+ * is --e-global-color-accent, #4898C4 is --e-global-color-9705123, and the type
+ * is GT Eesti Display Trial, already loaded by the theme. What changed is the
+ * treatment, not the typeface.
  */
 
 :root {
@@ -521,7 +532,9 @@ img[src*="image_2025-01-30_114647677"] {
 	--wa-green-lift: #7bd46a;
 	--wa-teal: #4fc3a1;
 	--wa-blue: #4898c4;
-	--wa-deep: #041a26;
+	--wa-frost: #dceef7;
+	--wa-ice-edge: rgba(190, 226, 244, 0.42);
+	--wa-deep: #03131d;
 }
 
 /* ---- The container ------------------------------------------------------ */
@@ -546,10 +559,10 @@ img[src*="image_2025-01-30_114647677"] {
 .elementor-3668 .elementor-element.elementor-element-d44cab7 > .elementor-motion-effects-container > .elementor-motion-effects-layer {
 	background-color: var(--wa-deep);
 	background-image:
-		radial-gradient(105% 78% at 76% 2%, rgba(86, 178, 224, 0.42) 0%, rgba(86, 178, 224, 0) 56%),
-		radial-gradient(88% 72% at 8% 100%, rgba(89, 183, 72, 0.32) 0%, rgba(89, 183, 72, 0) 58%),
-		radial-gradient(64% 46% at 50% 118%, rgba(79, 195, 161, 0.3) 0%, rgba(79, 195, 161, 0) 70%),
-		linear-gradient(168deg, #07324a 0%, #051f2d 48%, #03121b 100%);
+		radial-gradient(98% 74% at 82% 0%, rgba(86, 178, 224, 0.4) 0%, rgba(86, 178, 224, 0) 58%),
+		radial-gradient(84% 68% at 4% 100%, rgba(89, 183, 72, 0.3) 0%, rgba(89, 183, 72, 0) 58%),
+		radial-gradient(60% 44% at 46% 116%, rgba(79, 195, 161, 0.28) 0%, rgba(79, 195, 161, 0) 70%),
+		linear-gradient(166deg, #07344c 0%, #05202f 46%, #03131d 100%);
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-size: cover;
@@ -565,12 +578,8 @@ img[src*="image_2025-01-30_114647677"] {
 /* ---- Layout ------------------------------------------------------------- */
 .wa-cover {
 	position: relative;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	min-height: min(720px, 100svh);
-	gap: 0;
+	display: block;
+	min-height: min(700px, 100svh);
 	color: var(--wa-ink);
 	font-family: "GT Eesti Display Trial", sans-serif;
 }
@@ -584,8 +593,20 @@ img[src*="image_2025-01-30_114647677"] {
 .elementor-3668 .elementor-element.elementor-element-d44cab7 > .wa-cover {
 	width: 100%;
 	max-width: none;
-	padding: clamp(44px, 4.6vw, 62px) clamp(20px, 5vw, 64px) clamp(52px, 4.8vw, 68px);
-	text-align: center;
+	padding: clamp(46px, 5vw, 76px) clamp(20px, 5vw, 68px) clamp(58px, 5.2vw, 84px);
+	text-align: left;
+}
+
+.wa-cover__grid {
+	position: relative;
+	z-index: 1;
+	display: grid;
+	grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+	align-items: center;
+	gap: clamp(28px, 3.2vw, 52px);
+	width: 100%;
+	max-width: 1120px;
+	margin: 0 auto;
 }
 
 /* ---- Media plate -------------------------------------------------------- */
@@ -611,28 +632,28 @@ img[src*="image_2025-01-30_114647677"] {
 }
 
 /*
- * The scrim is the contrast guarantee. The panel sits in the middle of the
- * frame, so the centre is darkened hardest and the edges are allowed to keep
- * some of the plate's detail.
+ * The scrim is the contrast guarantee, and it is weighted left because that is
+ * where the copy is. The right stays lighter so the plate still reads as water
+ * behind the product.
  */
 .wa-cover__scrim {
 	position: absolute;
 	inset: 0;
 	background:
-		radial-gradient(76% 64% at 50% 46%, rgba(3, 16, 24, 0.34) 0%, rgba(3, 16, 24, 0.74) 66%, rgba(3, 16, 24, 0.93) 100%),
-		linear-gradient(180deg, rgba(3, 16, 24, 0.7) 0%, rgba(3, 16, 24, 0.22) 32%, rgba(3, 16, 24, 0.88) 100%);
+		linear-gradient(94deg, rgba(3, 16, 24, 0.94) 0%, rgba(3, 16, 24, 0.86) 34%, rgba(3, 16, 24, 0.5) 62%, rgba(3, 16, 24, 0.62) 100%),
+		linear-gradient(180deg, rgba(3, 16, 24, 0.6) 0%, rgba(3, 16, 24, 0.12) 34%, rgba(3, 16, 24, 0.82) 100%);
 }
 
-/* Ripple rings, spreading from a point below the panel. Three of them on a
-   nine-second cycle, staggered, so there is almost always exactly one visible. */
+/* Ripple rings, spreading from a point under the slab. Three on a nine-second
+   cycle, staggered, so there is almost always exactly one visible. */
 .wa-cover__ripples span {
 	position: absolute;
-	left: 50%;
-	top: 64%;
+	left: 68%;
+	top: 58%;
 	width: 18px;
 	height: 18px;
 	margin: -9px 0 0 -9px;
-	border: 1px solid rgba(150, 216, 255, 0.5);
+	border: 1px solid rgba(150, 216, 255, 0.45);
 	border-radius: 50%;
 	opacity: 0;
 	animation: wa-ripple 9s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
@@ -643,8 +664,9 @@ img[src*="image_2025-01-30_114647677"] {
 
 @keyframes wa-ripple {
 	0%   { transform: scale(0.2); opacity: 0; }
-	9%   { opacity: 0.5; }
-	100% { transform: scale(36); opacity: 0; }
+	7%   { opacity: 0.5; }
+	38%  { opacity: 0.1; }
+	100% { transform: scale(30); opacity: 0; }
 }
 
 /* Falling droplets. Seven, each with its own lane, delay and pace so the loop
@@ -676,45 +698,150 @@ img[src*="image_2025-01-30_114647677"] {
 	100% { transform: translateY(78vh); opacity: 0; }
 }
 
-/* ---- The panel ---------------------------------------------------------- */
-/*
- * Keeps the captured card's DNA — 30px radius, a lit top-left edge, a wide inset
- * white glow — but at an opacity that actually shows up, because the plate behind
- * it is now dark.
- */
-.wa-cover__panel {
+/* =========================================================================
+   Ice to water
+   =========================================================================
+   One material, shared by the two buttons and the product slab. At rest a
+   surface is frozen: angular corners, a frost grain over it, a cold edge, and
+   colour pulled toward blue. Under the pointer it thaws — the grain clears, the
+   corners relax out of square and keep drifting, a pool of warm water spreads
+   from wherever the cursor actually is, and meltwater runs off the bottom.
+
+   The pointer position arrives as --mx/--my from the cover's script. With no
+   script the melt starts from the centre, which is a slightly duller version of
+   the same effect rather than a broken one.
+
+   Touch devices have no hover, so they are served the thawed state permanently
+   further down — a phone should not be shown the half of this it cannot reach. */
+
+.wa-ice {
 	position: relative;
-	z-index: 1;
-	width: 100%;
-	max-width: 830px;
-	padding: clamp(28px, 3vw, 42px) clamp(22px, 3.6vw, 52px) clamp(26px, 2.6vw, 34px);
-	border: 1px solid rgba(255, 255, 255, 0.14);
-	border-top-color: rgba(255, 255, 255, 0.3);
-	border-left-color: rgba(255, 255, 255, 0.22);
-	border-radius: 30px;
-	background: linear-gradient(150deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 46%, rgba(255, 255, 255, 0.055) 100%);
-	-webkit-backdrop-filter: blur(16px) saturate(150%);
-	backdrop-filter: blur(16px) saturate(150%);
-	box-shadow:
-		0 40px 90px -34px rgba(0, 0, 0, 0.85),
-		inset 0 1px 0 rgba(255, 255, 255, 0.18),
-		inset 0 0 91px 70px rgba(255, 255, 255, 0.035);
+	isolation: isolate;
+	overflow: hidden;
+	/* Square-ish: frozen things have corners. */
+	border-radius: 9px;
+	transition:
+		border-radius 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+		transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+		box-shadow 0.5s ease,
+		border-color 0.5s ease;
 }
 
-/* ---- Eyebrow ------------------------------------------------------------ */
+/* The frost grain. feTurbulence rather than a tiled PNG: it is a few hundred
+   bytes, it never repeats visibly, and it scales to the slab and the buttons
+   from one definition. */
+.wa-ice__frost {
+	position: absolute;
+	inset: -10%;
+	z-index: -1;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23f)'/%3E%3C/svg%3E");
+	background-size: 200px 200px;
+	opacity: 0.4;
+	mix-blend-mode: screen;
+	transition: opacity 0.55s ease;
+	pointer-events: none;
+}
+
+/* Frozen: a hard specular edge across the top-left, the way a cut face catches
+   light. Replaced on hover by the softer, wetter sheen below it. */
+.wa-ice::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: linear-gradient(146deg, rgba(232, 248, 255, 0.34) 0%, rgba(232, 248, 255, 0.05) 26%, rgba(255, 255, 255, 0) 52%);
+	opacity: 1;
+	transition: opacity 0.5s ease;
+	pointer-events: none;
+}
+.wa-ice:hover::before,
+.wa-ice:focus-visible::before { opacity: 0; }
+
+/* Thawed: a wet highlight that pools toward the top of the surface. */
+.wa-ice::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.06) 34%, rgba(255, 255, 255, 0) 60%);
+	opacity: 0;
+	transition: opacity 0.55s ease;
+	pointer-events: none;
+}
+.wa-ice:hover::after,
+.wa-ice:focus-visible::after { opacity: 1; }
+
+/* The thaw: a pool of warmer water opening from the pointer. */
+.wa-ice__melt {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background:
+		radial-gradient(60% 75% at var(--mx, 50%) var(--my, 50%), rgba(79, 195, 161, 0.5) 0%, rgba(72, 152, 196, 0.32) 42%, rgba(72, 152, 196, 0) 76%);
+	opacity: 0;
+	transform: scale(0.45);
+	transition: opacity 0.45s ease, transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+	pointer-events: none;
+}
+
+/* Meltwater. Each drip is placed and timed per instance below. */
+.wa-ice__drip {
+	position: absolute;
+	top: 0;
+	width: 2px;
+	height: 12px;
+	border-radius: 0 0 3px 3px;
+	background: linear-gradient(180deg, rgba(200, 236, 255, 0) 0%, rgba(200, 236, 255, 0.9) 100%);
+	opacity: 0;
+	pointer-events: none;
+}
+.wa-ice__drip:nth-of-type(1) { left: 22%; }
+.wa-ice__drip:nth-of-type(2) { left: 57%; }
+.wa-ice__drip:nth-of-type(3) { left: 78%; }
+.wa-ice__drip:nth-of-type(4) { left: 39%; }
+
+.wa-ice:hover,
+.wa-ice:focus-visible {
+	border-radius: 27px 31px 25px 33px;
+	animation: wa-thaw 6s ease-in-out infinite;
+}
+.wa-ice:hover .wa-ice__frost,
+.wa-ice:focus-visible .wa-ice__frost { opacity: 0; }
+.wa-ice:hover .wa-ice__melt,
+.wa-ice:focus-visible .wa-ice__melt { opacity: 1; transform: scale(1.7); }
+.wa-ice:hover .wa-ice__drip,
+.wa-ice:focus-visible .wa-ice__drip { animation: wa-run 1.5s ease-in infinite; }
+.wa-ice:hover .wa-ice__drip:nth-of-type(2) { animation-delay: 0.45s; }
+.wa-ice:hover .wa-ice__drip:nth-of-type(3) { animation-delay: 0.9s; }
+.wa-ice:hover .wa-ice__drip:nth-of-type(4) { animation-delay: 1.2s; }
+
+/* Corners that keep moving once thawed, so a held hover looks liquid rather
+   than like a second static state. */
+@keyframes wa-thaw {
+	0%, 100% { border-radius: 27px 31px 25px 33px; }
+	33%      { border-radius: 32px 24px 34px 26px; }
+	66%      { border-radius: 24px 34px 28px 30px; }
+}
+
+@keyframes wa-run {
+	0%   { transform: translateY(0) scaleY(0.4); opacity: 0; }
+	18%  { opacity: 0.9; }
+	100% { transform: translateY(var(--run, 46px)) scaleY(1.5); opacity: 0; }
+}
+
+/* ---- Copy column -------------------------------------------------------- */
 /*
- * Still an <h4>, so the document outline is unchanged from the capture, but no
- * longer 38px grey on a phone. A live pip carries the eye to it without needing
- * size to do the work.
+ * Still three <h4>s at the same levels as the capture, so the document outline
+ * is unchanged — only the treatment moved.
  */
 .wa-cover .wa-cover__eyebrow {
 	display: inline-block;
-	margin: 0 0 clamp(14px, 1.7vw, 19px);
+	margin: 0 0 clamp(14px, 1.6vw, 18px);
 	font-family: inherit;
-	font-size: clamp(10.5px, 1.05vw, 12.5px);
+	font-size: clamp(10px, 0.95vw, 11.5px);
 	font-weight: 500;
 	line-height: 1.4;
-	letter-spacing: 0.16em;
+	letter-spacing: 0.2em;
 	text-transform: uppercase;
 	color: rgba(244, 250, 255, 0.72);
 }
@@ -724,7 +851,7 @@ img[src*="image_2025-01-30_114647677"] {
 	display: inline-block;
 	width: 7px;
 	height: 7px;
-	margin-right: 9px;
+	margin-right: 10px;
 	vertical-align: 1px;
 	border-radius: 50%;
 	background: var(--wa-green-lift);
@@ -738,16 +865,13 @@ img[src*="image_2025-01-30_114647677"] {
 	100% { box-shadow: 0 0 0 0 rgba(123, 212, 106, 0); }
 }
 
-/* ---- Headline ----------------------------------------------------------- */
 .wa-cover .wa-cover__title {
 	margin: 0;
 	font-family: inherit;
-	/* 400 and the same proportions as the captured headline, only fluid, so it
-	   cannot overflow its card the way the 81.95px fixed size did. */
 	font-weight: 400;
-	font-size: clamp(2.25rem, 5.5vw, 4.4rem);
-	line-height: 1.04;
-	letter-spacing: -0.015em;
+	font-size: clamp(2.3rem, 4.6vw, 4.05rem);
+	line-height: 1.02;
+	letter-spacing: -0.03em;
 	color: #ffffff;
 	text-wrap: balance;
 }
@@ -792,24 +916,23 @@ img[src*="image_2025-01-30_114647677"] {
 	to { stroke-dashoffset: 0; }
 }
 
-/* ---- Copy --------------------------------------------------------------- */
 .wa-cover .wa-cover__lede {
-	max-width: 44ch;
-	margin: clamp(15px, 1.8vw, 21px) auto 0;
+	max-width: 34ch;
+	margin: clamp(16px, 1.9vw, 22px) 0 0;
 	font-family: inherit;
-	font-size: clamp(1rem, 1.45vw, 1.3rem);
+	font-size: clamp(1rem, 1.25vw, 1.2rem);
 	font-weight: 400;
 	font-style: normal;
-	line-height: 1.42;
-	letter-spacing: 0;
+	line-height: 1.38;
+	letter-spacing: -0.005em;
 	color: var(--wa-ink);
 }
 
 .wa-cover .wa-cover__body {
-	max-width: 62ch;
-	margin: clamp(11px, 1.3vw, 15px) auto 0;
+	max-width: 54ch;
+	margin: clamp(11px, 1.2vw, 14px) 0 0;
 	font-family: inherit;
-	font-size: clamp(0.9rem, 1.1vw, 1rem);
+	font-size: clamp(0.875rem, 1vw, 0.95rem);
 	/* The capture set this italic. Three lines of italic over a photograph was
 	   most of why it was hard to read; upright at 82% white is not. */
 	font-style: normal;
@@ -838,30 +961,39 @@ img[src*="image_2025-01-30_114647677"] {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	justify-content: center;
 	gap: 12px;
-	margin-top: clamp(22px, 2.4vw, 28px);
+	margin-top: clamp(24px, 2.6vw, 32px);
 }
 
 .wa-cover .wa-cover__cta {
 	display: inline-flex;
 	align-items: center;
-	gap: 9px;
-	padding: 14px 28px;
-	border: 1px solid transparent;
-	border-radius: 50px;
-	background: linear-gradient(180deg, #66c953 0%, #4ea83f 100%);
-	color: #ffffff;
+	padding: 15px 28px;
+	border: 1px solid var(--wa-ice-edge);
+	/* Frozen: a cold, pale surface with the brand green held back under it. */
+	background:
+		linear-gradient(168deg, rgba(220, 238, 247, 0.22) 0%, rgba(160, 202, 224, 0.1) 52%, rgba(89, 183, 72, 0.18) 100%),
+		rgba(11, 46, 62, 0.72);
+	-webkit-backdrop-filter: blur(7px) saturate(0.85);
+	backdrop-filter: blur(7px) saturate(0.85);
+	color: var(--wa-frost);
 	font-family: inherit;
 	font-size: 15px;
 	font-weight: 500;
 	line-height: 1;
-	letter-spacing: 0.01em;
+	letter-spacing: 0.02em;
 	text-decoration: none;
 	box-shadow:
-		0 14px 30px -12px rgba(89, 183, 72, 0.65),
-		inset 0 1px 0 rgba(255, 255, 255, 0.3);
-	transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+		inset 0 1px 0 rgba(255, 255, 255, 0.34),
+		inset 0 -10px 22px -14px rgba(120, 190, 235, 0.6),
+		0 12px 26px -16px rgba(0, 0, 0, 0.8);
+}
+
+.wa-cover__cta-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	transition: color 0.4s ease;
 }
 
 .wa-cover .wa-cover__cta svg {
@@ -873,88 +1005,184 @@ img[src*="image_2025-01-30_114647677"] {
 	stroke-width: 1.7;
 	stroke-linecap: round;
 	stroke-linejoin: round;
-	transition: transform 0.22s ease;
+	transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Thawed: the green comes through, the surface warms and lifts. */
 .wa-cover .wa-cover__cta:hover,
 .wa-cover .wa-cover__cta:focus-visible {
 	transform: translateY(-2px);
+	border-color: rgba(123, 212, 106, 0.55);
+	color: #ffffff;
 	box-shadow:
-		0 20px 38px -12px rgba(89, 183, 72, 0.75),
-		inset 0 1px 0 rgba(255, 255, 255, 0.36);
+		inset 0 1px 0 rgba(255, 255, 255, 0.4),
+		0 20px 40px -18px rgba(89, 183, 72, 0.7);
 }
 .wa-cover .wa-cover__cta:hover svg,
-.wa-cover .wa-cover__cta:focus-visible svg { transform: translateX(3px); }
+.wa-cover .wa-cover__cta:focus-visible svg { transform: translateX(4px); }
+.wa-cover .wa-cover__cta .wa-ice__drip { --run: 40px; }
+
+/* The primary reads warmer even frozen, so the hierarchy survives the ice. */
+.wa-cover .wa-cover__cta:not(.wa-cover__cta--ghost) {
+	background:
+		linear-gradient(168deg, rgba(232, 250, 255, 0.34) 0%, rgba(126, 216, 108, 0.62) 40%, rgba(82, 176, 66, 0.94) 100%),
+		#3f8f33;
+	border-color: rgba(190, 240, 178, 0.5);
+	color: #ffffff;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.46),
+		inset 0 -12px 24px -14px rgba(226, 250, 255, 0.55),
+		0 14px 30px -16px rgba(89, 183, 72, 0.55);
+}
 
 .wa-cover .wa-cover__cta--ghost {
-	background: rgba(255, 255, 255, 0.07);
-	border-color: rgba(255, 255, 255, 0.26);
-	color: var(--wa-ink);
-	box-shadow: none;
-}
-.wa-cover .wa-cover__cta--ghost:hover,
-.wa-cover .wa-cover__cta--ghost:focus-visible {
-	background: rgba(255, 255, 255, 0.14);
-	border-color: rgba(255, 255, 255, 0.42);
-	box-shadow: none;
+	color: var(--wa-ink-soft);
 }
 
-/* A visible ring on both buttons and both links, because the dark plate makes
-   the browser default all but invisible. */
+/* A visible ring on every cover link — the dark plate makes the browser default
+   all but invisible. */
 .wa-cover a:focus-visible {
 	outline: 2px solid #9fe58f;
 	outline-offset: 3px;
 }
 
-/* ---- Proof chips -------------------------------------------------------- */
+/* ---- Proof -------------------------------------------------------------- */
 /*
- * The same four claims the captured hero made in its third paragraph and its
- * body copy, laid out to be scanned instead of read. Nothing new is asserted
- * here: Chubb, the ten minutes, "no plumber, no pipe cutting" and who it is
- * trusted by are all already in the copy above.
+ * The same claims the captured hero made in its body copy, laid out to be
+ * scanned rather than read. Set as a plain checked list instead of pills: the
+ * pills competed with the buttons directly above them, and the icon band below
+ * the cover is already a row of badges.
+ *
+ * Deliberately not TIME, Chubb or "assembled in the USA" — the band immediately
+ * below the cover carries all three, and repeating them here would say the same
+ * thing twice within one screen.
  */
 .wa-cover__proof {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	/* Four chips cannot share a row inside an 830px panel, and a greedy wrap
-	   leaves the fourth stranded on its own. Capped so it breaks 2 + 2, with the
-	   two rows within ~10px of each other in width. */
-	max-width: 470px;
-	text-align: center;
-	margin: clamp(20px, 2.3vw, 26px) auto 0;
-	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, auto));
+	justify-content: start;
+	gap: 9px clamp(18px, 2.4vw, 34px);
+	margin: clamp(24px, 2.8vw, 34px) 0 0;
+	padding: clamp(20px, 2.2vw, 26px) 0 0;
+	border-top: 1px solid rgba(255, 255, 255, 0.11);
 	list-style: none;
 }
 
 .wa-cover__proof li {
-	display: inline-flex;
+	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 9px;
 	margin: 0;
-	padding: 9px 15px;
-	border: 1px solid rgba(255, 255, 255, 0.13);
-	border-radius: 50px;
-	background: rgba(255, 255, 255, 0.055);
-	font-size: 12.5px;
+	font-size: 13px;
 	font-weight: 400;
-	line-height: 1.2;
-	letter-spacing: 0.01em;
-	color: rgba(244, 250, 255, 0.84);
+	line-height: 1.3;
+	letter-spacing: 0.005em;
+	color: rgba(244, 250, 255, 0.78);
 }
 
 .wa-cover__proof svg {
-	width: 14px;
-	height: 14px;
+	width: 15px;
+	height: 15px;
 	flex: 0 0 auto;
 	fill: none;
 	stroke: var(--wa-green-lift);
-	stroke-width: 1.9;
+	stroke-width: 2;
 	stroke-linecap: round;
 	stroke-linejoin: round;
 }
+
+/* ---- The slab ----------------------------------------------------------- */
+/*
+ * The product, suspended in a block of ice. This is the cover's subject and the
+ * largest instance of the thaw, so it carries the facet and the caption that the
+ * buttons do not.
+ */
+.wa-cover .wa-cover__slab {
+	position: relative;
+	display: block;
+	width: 100%;
+	max-width: 460px;
+	margin-inline: auto;
+	padding: clamp(24px, 3vw, 40px);
+	border: 1px solid var(--wa-ice-edge);
+	background:
+		linear-gradient(158deg, rgba(223, 242, 252, 0.3) 0%, rgba(132, 190, 219, 0.13) 40%, rgba(12, 54, 74, 0.34) 100%),
+		rgba(12, 50, 69, 0.42);
+	-webkit-backdrop-filter: blur(13px) saturate(0.9);
+	backdrop-filter: blur(13px) saturate(0.9);
+	text-decoration: none;
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.45),
+		inset 1px 0 0 rgba(255, 255, 255, 0.2),
+		inset 0 0 70px 40px rgba(180, 222, 245, 0.07),
+		0 40px 80px -36px rgba(0, 0, 0, 0.85);
+}
+.wa-cover .wa-cover__slab .wa-ice__drip { --run: 68px; }
+.wa-cover .wa-cover__slab .wa-ice__frost { opacity: 0.34; }
+.wa-cover .wa-cover__slab:hover .wa-ice__frost,
+.wa-cover .wa-cover__slab:focus-visible .wa-ice__frost { opacity: 0; }
+
+/* The flat sheen off a cut face of ice. It is the most obviously frozen thing
+   here, so it is also the first thing to go on hover. */
+.wa-slab__facet {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background:
+		linear-gradient(122deg, rgba(255, 255, 255, 0) 26%, rgba(220, 244, 255, 0.3) 41%, rgba(255, 255, 255, 0) 53%),
+		linear-gradient(122deg, rgba(255, 255, 255, 0) 60%, rgba(196, 230, 250, 0.14) 70%, rgba(255, 255, 255, 0) 79%);
+	transition: opacity 0.55s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+	pointer-events: none;
+}
+.wa-cover .wa-cover__slab:hover .wa-slab__facet,
+.wa-cover .wa-cover__slab:focus-visible .wa-slab__facet {
+	opacity: 0;
+	transform: translateX(18%);
+}
+
+.wa-slab__product {
+	display: block;
+	width: 100%;
+	height: auto;
+	/* Cold and slightly flattened at rest; true colour once it thaws. */
+	filter: saturate(0.72) brightness(0.97) contrast(1.02) drop-shadow(0 26px 36px rgba(0, 0, 0, 0.5));
+	transition: filter 0.6s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.wa-cover .wa-cover__slab:hover .wa-slab__product,
+.wa-cover .wa-cover__slab:focus-visible .wa-slab__product {
+	filter: saturate(1.06) brightness(1.04) contrast(1) drop-shadow(0 30px 42px rgba(0, 0, 0, 0.55));
+	transform: scale(1.035);
+}
+
+.wa-slab__caption {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: clamp(12px, 1.6vw, 18px);
+	font-size: 11.5px;
+	font-weight: 500;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	/* Solid, not an alpha: this sits on the slab, whose backdrop-filter means the
+	   surface behind it tracks the plate. At 62% over a bright plate it measured
+	   3.34:1, under AA for 11.5px text. #cfe0ec holds 5.5:1 in that worst case. */
+	color: #cfe0ec;
+	transition: color 0.35s ease;
+}
+.wa-slab__caption svg {
+	width: 14px;
+	height: 14px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.wa-cover .wa-cover__slab:hover .wa-slab__caption,
+.wa-cover .wa-cover__slab:focus-visible .wa-slab__caption { color: var(--wa-green-lift); }
+.wa-cover .wa-cover__slab:hover .wa-slab__caption svg,
+.wa-cover .wa-cover__slab:focus-visible .wa-slab__caption svg { transform: translateX(4px); }
 
 /* ---- Scroll cue --------------------------------------------------------- */
 .wa-cover .wa-cover__scroll {
@@ -994,86 +1222,135 @@ img[src*="image_2025-01-30_114647677"] {
 	50%      { transform: translateY(4px); }
 }
 
-/* ---- Tablet ------------------------------------------------------------- */
-@media (max-width: 1024px) {
+/* ---- Stacked ------------------------------------------------------------ */
+@media (max-width: 900px) {
 	.wa-cover { min-height: 0; }
-	.wa-cover__panel { max-width: 700px; }
+
+	.wa-cover__grid {
+		grid-template-columns: minmax(0, 1fr);
+		max-width: 620px;
+	}
+
+	.wa-cover .wa-cover__lede { max-width: none; }
+	.wa-cover .wa-cover__body { max-width: none; }
+
+	.wa-cover .wa-cover__slab {
+		max-width: 380px;
+		order: 2;
+	}
+
+	.wa-cover__ripples { display: none; }
+
+	/* The scrim's left weighting is for a side-by-side layout. Stacked, the copy
+	   runs the full width and wants it even. */
+	.wa-cover__scrim {
+		background:
+			linear-gradient(180deg, rgba(3, 16, 24, 0.72) 0%, rgba(3, 16, 24, 0.5) 46%, rgba(3, 16, 24, 0.86) 100%);
+	}
 }
 
 /* ---- Phones ------------------------------------------------------------- */
 /*
  * No video below 900px — the script never sets a src, so the poster is the
- * plate. The panel loses its border radius inset and most of its padding, and
- * the chips drop to the two that a phone has room to read at a glance.
+ * plate.
  */
 @media (max-width: 767px) {
-	.wa-cover { min-height: 0; }
-
 	.elementor-3668 .elementor-element.elementor-element-d44cab7 > .wa-cover {
-		padding: 52px 16px 66px;
+		padding: 46px 16px 62px;
 	}
 
-	.wa-cover__panel {
-		padding: 26px 20px 30px;
-		border-radius: 24px;
-	}
+	.wa-cover__grid { gap: 30px; }
 
 	.wa-cover .wa-cover__eyebrow {
-		margin-bottom: 14px;
-		font-size: 10px;
-		letter-spacing: 0.13em;
+		margin-bottom: 13px;
+		font-size: 9.5px;
+		letter-spacing: 0.17em;
 	}
 
-	.wa-cover .wa-cover__title { font-size: clamp(2rem, 9.4vw, 2.7rem); }
-
-	.wa-cover .wa-cover__lede { font-size: 1.02rem; margin-top: 16px; }
-
+	.wa-cover .wa-cover__title { font-size: clamp(2rem, 9.6vw, 2.75rem); }
+	.wa-cover .wa-cover__lede { font-size: 1.02rem; margin-top: 15px; }
 	.wa-cover .wa-cover__body { font-size: 0.875rem; line-height: 1.58; }
 
 	.wa-cover__actions { margin-top: 22px; gap: 10px; }
-
 	.wa-cover .wa-cover__cta {
 		justify-content: center;
 		width: 100%;
-		padding: 15px 22px;
+		padding: 16px 22px;
 	}
 
-	.wa-cover__proof { gap: 6px; margin-top: 22px; }
-	.wa-cover__proof li { padding: 8px 12px; font-size: 11.5px; }
-	/* Three chips fit two tidy rows on a phone. The one dropped is the longest
-	   and the least specific — the other three are the differentiators. */
-	.wa-cover__proof li:nth-child(2) { display: none; }
+	.wa-cover__proof {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 8px;
+		margin-top: 22px;
+		padding-top: 18px;
+	}
+	.wa-cover__proof li { font-size: 12.5px; }
+	/* Four rows of one is too much ladder under the buttons. The two dropped are
+	   the ones the paragraph above states most plainly. */
+	.wa-cover__proof li:nth-child(n + 3) { display: none; }
+
+	.wa-cover .wa-cover__slab { max-width: 300px; padding: 20px; }
 
 	/* Two rings instead of three, and no falling droplets: on a phone they are
-	   under the panel for most of their travel and only cost battery. */
+	   behind the copy for most of their travel and only cost battery. */
 	.wa-cover__ripples span:nth-child(3),
 	.wa-cover__drops { display: none; }
 
 	/* The cart pill is fixed bottom-right and was landing on the hero copy. The
 	   cue is the only cover element near it, so it steps aside rather than the
 	   pill being moved. */
-	.wa-cover .wa-cover__scroll { bottom: 14px; }
+	.wa-cover .wa-cover__scroll { bottom: 12px; }
 	.wa-cover .wa-cover__scroll span { display: none; }
+}
+
+/* ---- No pointer --------------------------------------------------------- */
+/*
+ * A touch screen can never hover, so it would only ever see the frozen half of
+ * the idea. Serve it the thawed state instead: warm surfaces, true product
+ * colour, relaxed corners. No animation — there is no interaction to answer.
+ */
+@media (hover: none) {
+	.wa-ice { border-radius: 26px 30px 24px 32px; }
+	.wa-ice__frost { opacity: 0; }
+	.wa-ice::before { opacity: 0; }
+	.wa-ice::after { opacity: 1; }
+	.wa-ice__melt { opacity: 0.85; transform: scale(1.5); }
+	.wa-slab__facet { opacity: 0; }
+	.wa-slab__product { filter: saturate(1.04) brightness(1.03) drop-shadow(0 26px 36px rgba(0, 0, 0, 0.5)); }
+	.wa-cover .wa-cover__cta { color: #ffffff; }
+	.wa-cover .wa-cover__cta--ghost { color: var(--wa-ink); }
+	.wa-slab__caption { color: var(--wa-green-lift); }
 }
 
 /* ---- Reduced motion ----------------------------------------------------- */
 /*
- * Everything that moves here is decoration, so under a reduced-motion
- * preference it all stops and nothing is lost. The script checks the same query
- * before it loads the video, so the plate stays a still image too.
+ * The thaw stays — it is how a visitor can tell the buttons and the slab are
+ * live — but it becomes a straight cross-fade: no travelling meltwater, no
+ * corners drifting under a held cursor, no ambient loops. The script checks the
+ * same query before it loads the video, so the plate stays a still image too.
  */
 @media (prefers-reduced-motion: reduce) {
 	.wa-cover__ripples span,
 	.wa-cover__drops span,
 	.wa-cover__pip,
 	.wa-cover__scroll svg,
-	.wa-cover__underline path {
+	.wa-cover__underline path,
+	.wa-ice,
+	.wa-ice:hover,
+	.wa-ice:focus-visible,
+	.wa-ice__drip,
+	.wa-ice:hover .wa-ice__drip,
+	.wa-ice:focus-visible .wa-ice__drip {
 		animation: none !important;
 	}
 	.wa-cover__underline path { stroke-dashoffset: 0; }
 	.wa-cover__ripples span,
-	.wa-cover__drops span { opacity: 0; }
-	.wa-cover .wa-cover__cta { transition: none; }
+	.wa-cover__drops span,
+	.wa-ice__drip { opacity: 0; }
+	.wa-cover .wa-cover__cta:hover,
+	.wa-cover .wa-cover__cta:focus-visible,
+	.wa-cover .wa-cover__slab:hover .wa-slab__product,
+	.wa-cover .wa-cover__slab:focus-visible .wa-slab__product { transform: none; }
 }
 </style>
 <!-- /wa:content:cover-style -->
@@ -1449,30 +1726,57 @@ document.getElementById('aqvc-close').addEventListener('click',function(){
 			<div class="wa-cover__ripples"><span></span><span></span><span></span></div>
 			<div class="wa-cover__drops"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
 		</div>
-		<div class="wa-cover__panel">
-			<h4 class="wa-cover__eyebrow"><span class="wa-cover__pip"></span>Assembled and Patented in the USA</h4>
-			<h4 class="wa-cover__title">Stop <span class="wa-cover__mark">Water&nbsp;Damage<svg class="wa-cover__underline" viewBox="0 0 300 18" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M4,12.5 C58,5.2 134,2.4 205,4.8 C245,6.2 276,8.8 296,12.2" /></svg></span> Before It Starts.</h4>
-			<h4 class="wa-cover__lede">Automatic Water Leak Detection for Commercial Buildings, Apartment Complexes &amp; Property Managers.</h4>
-			<p class="wa-cover__body"><a href="/contact-us/"><strong>aquaHALT</strong></a> is the only Chubb-vetted, award-winning automatic water shutoff system that installs at fixture level — no pipe cutting, no plumber, no electrician. Deploy across every toilet, sink, and ice maker in your building in under 10 minutes per unit.</p>
-			<div class="wa-cover__actions">
-				<a class="wa-cover__cta" href="/buy-now/">Request Bulk Pricing<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" /></svg></a>
-				<a class="wa-cover__cta wa-cover__cta--ghost" href="/#competitor-stats">See how it compares</a>
+		<div class="wa-cover__grid">
+			<div class="wa-cover__copy">
+				<h4 class="wa-cover__eyebrow"><span class="wa-cover__pip"></span>Assembled and Patented in the USA</h4>
+				<h4 class="wa-cover__title">Stop <span class="wa-cover__mark">Water&nbsp;Damage<svg class="wa-cover__underline" viewBox="0 0 300 18" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M4,12.5 C58,5.2 134,2.4 205,4.8 C245,6.2 276,8.8 296,12.2" /></svg></span> Before It Starts.</h4>
+				<h4 class="wa-cover__lede">Automatic Water Leak Detection for Commercial Buildings, Apartment Complexes &amp; Property Managers.</h4>
+				<p class="wa-cover__body"><a href="/contact-us/"><strong>aquaHALT</strong></a> is the only Chubb-vetted, award-winning automatic water shutoff system that installs at fixture level — no pipe cutting, no plumber, no electrician. Deploy across every toilet, sink, and ice maker in your building in under 10 minutes per unit.</p>
+				<div class="wa-cover__actions">
+					<a class="wa-cover__cta wa-ice" data-ice href="/buy-now/"><span class="wa-ice__frost" aria-hidden="true"></span><span class="wa-ice__melt" aria-hidden="true"></span><span class="wa-ice__drip" aria-hidden="true"></span><span class="wa-ice__drip" aria-hidden="true"></span><span class="wa-cover__cta-label">Request Bulk Pricing<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" /></svg></span></a>
+					<a class="wa-cover__cta wa-cover__cta--ghost wa-ice" data-ice href="/#competitor-stats"><span class="wa-ice__frost" aria-hidden="true"></span><span class="wa-ice__melt" aria-hidden="true"></span><span class="wa-ice__drip" aria-hidden="true"></span><span class="wa-cover__cta-label">See how it compares</span></a>
+				</div>
+				<ul class="wa-cover__proof">
+					<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>Installs at fixture level</li>
+					<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>Under 10 minutes per unit</li>
+					<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>No plumber, no electrician</li>
+					<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>Trusted by property managers &amp; insurers</li>
+				</ul>
 			</div>
-			<ul class="wa-cover__proof">
-				<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>Installs at fixture level</li>
-				<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>Trusted by property managers &amp; insurers</li>
-				<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>Under 10 minutes per unit</li>
-				<li><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 8.5 6.3 11.8 13 5" /></svg>No plumber, no electrician</li>
-			</ul>
+			<a class="wa-cover__slab wa-ice" data-ice href="/buy-now/">
+				<span class="wa-ice__frost" aria-hidden="true"></span>
+				<span class="wa-ice__melt" aria-hidden="true"></span>
+				<span class="wa-slab__facet" aria-hidden="true"></span>
+				<span class="wa-ice__drip" aria-hidden="true"></span><span class="wa-ice__drip" aria-hidden="true"></span><span class="wa-ice__drip" aria-hidden="true"></span><span class="wa-ice__drip" aria-hidden="true"></span>
+				<img class="wa-slab__product" src="/wp-content/uploads/2025/02/aquahalt-all-1024x1024.png" srcset="/wp-content/uploads/2025/02/aquahalt-all-600x600.png 600w, /wp-content/uploads/2025/02/aquahalt-all-768x768.png 768w, /wp-content/uploads/2025/02/aquahalt-all-1024x1024.png 1024w" sizes="(max-width: 900px) 78vw, 38vw" width="1024" height="1024" decoding="async" alt="The aquaHALT range — four automatic shutoff units, for a toilet, a sink or an ice maker" />
+				<span class="wa-slab__caption">The full range <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" /></svg></span>
+			</a>
 		</div>
 		<a class="wa-cover__scroll" href="#competitor-stats"><span>The cost of inaction</span><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 6l4 4 4-4" /></svg></a>
 		<script>
-		/* Hold the hero video back until the page is idle, and never load it at all
-		   where it would cost more than it gives: phones and small tablets (the poster
-		   carries the design on its own), Data Saver, and reduced-motion. The poster
-		   attribute renders with no src set, so doing nothing here is a complete,
-		   intended state rather than a fallback. */
+		/* Two small things the cover needs at runtime, both optional.
+
+		   1. The thaw follows the pointer. Each iced surface melts from wherever
+		      the cursor crossed its edge rather than from a fixed centre, which is
+		      the difference between a hover state and something that behaves like
+		      a material. CSS cannot read pointer position, so it is handed down as
+		      two custom properties; with no script the melt just starts from the
+		      middle, which still looks right.
+
+		   2. The hero video is held back until the page is idle, and never loaded
+		      at all where it would cost more than it gives: phones and small
+		      tablets, Data Saver, reduced motion. The poster renders with no src
+		      set, so doing nothing is a complete state rather than a fallback. */
 		(function () {
+			var ice = document.querySelectorAll('.wa-cover [data-ice]')
+			for (var i = 0; i < ice.length; i++) {
+				ice[i].addEventListener('pointermove', function (e) {
+					var r = this.getBoundingClientRect()
+					this.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%')
+					this.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%')
+				})
+			}
+
 			var v = document.querySelector('.wa-cover__video')
 			if (!v || !v.dataset.src || !window.matchMedia) return
 			if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
