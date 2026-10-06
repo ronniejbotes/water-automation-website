@@ -1,6 +1,6 @@
 # Every URL that answers 200 on waterautomation.com, as discovered by
 # tools/discover.mjs. This is the capture manifest for tools/mirror-browser.mjs.
-# Generated 2026-09-08 — 189 routes.
+# Generated 2026-09-08 — 190 routes.
 /
 /2435/
 /about-us/
@@ -77,6 +77,7 @@
 /how-water-leak-detection-can-save-your-business/
 /how-water-leak-detectors-can-save-your-home-and-your-wallet/
 /i-was-one-forgotten-leak-away-from-disaster-how-aquahalt-saved-the-day/
+/ice-maker-line-leaking/
 /installation/
 /invisible-leaks-cost-big-heres-how-i-use-leak-detection-tools-to-catch-them-early/
 /iot-and-water-management-a-facility-managers-guide-to-smart-buildings/

@@ -565,4 +565,38 @@ const TABLE_MOBILE = [
   },
 ]
 
-export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE]
+// ---------------------------------------------------------------------------
+// The blog index: posts written after the capture
+// ---------------------------------------------------------------------------
+//
+// /blog/ is the WordPress archive as it stood on 8 September 2026, so it lists
+// only the posts that existed then. tools/new-post.mjs registers a new post in
+// routes.txt and post-sitemap.xml, but nothing puts it on the blog index, and a
+// reader who opens /blog/ sees nothing newer than the capture.
+//
+// Cards for posts written after the capture go in
+// content/blog-index-new-posts.html, newest first, in the archive's own
+// loop-item markup: the post's image, its title, a short summary and its date.
+// The captured cards render each post's entire body and clamp it to three
+// lines; these carry the summary instead, which fills the same three lines
+// without repeating a whole article on the index.
+//
+// The insert sits straight after the grid's opening tag, so the new cards come
+// first and no captured card moves to another page. Page 1 therefore holds
+// more than twelve cards.
+
+const BLOG_INDEX = [
+  {
+    id: 'blog-index-new-posts',
+    kind: 'insert',
+    files: ['blog/index.html'],
+    anchor: '<div class="elementor-loop-container elementor-grid" role="list">',
+    position: 'after',
+    htmlFile: 'content/blog-index-new-posts.html',
+    why: `A post that is not on the blog index can be found only through the
+      sitemap and the few pages that link to it. Newest first, to match the
+      order of the captured archive.`,
+  },
+]
+
+export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...BLOG_INDEX]
