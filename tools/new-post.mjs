@@ -166,13 +166,18 @@ for (const p of posts) {
   if (end === -1) { console.error(`${p.slug}: could not find end of post-content widget`); process.exit(1) }
   html = html.slice(0, openEnd) + '\n' + body + '\n\t\t\t\t' + html.slice(end - 6)
 
-  // sanity: the donor's identity must be completely gone
+  // sanity: the donor's identity must be completely gone from everything this
+  // script rewrote. The article body is left out of the check: it is the
+  // author's own text, and a new post may link to the donor post like any other
+  // page. A body citing /battery-powered-water-leak-detector-vs-smart-home-systems/
+  // is a link, not leftover identity, and must not stop the build.
+  const rewritten = html.slice(0, openEnd) + html.slice(openEnd + 1 + body.length)
   for (const [what, needle] of [
     ['donor slug', DONOR_SLUG],
     ['donor title', DONOR_TITLE_LONG],
     ['donor description', DONOR_DESC],
   ]) {
-    if (html.includes(needle)) { console.error(`${p.slug}: ${what} still present after rewrite`); process.exit(1) }
+    if (rewritten.includes(needle)) { console.error(`${p.slug}: ${what} still present after rewrite`); process.exit(1) }
   }
 
   const outDir = join(ROOT, p.slug)
