@@ -1,6 +1,6 @@
 # Every URL that answers 200 on waterautomation.com, as discovered by
 # tools/discover.mjs. This is the capture manifest for tools/mirror-browser.mjs.
-# Generated 2026-09-08 — 190 routes.
+# Generated 2026-09-08 — 191 routes.
 /
 /2435/
 /about-us/
@@ -171,6 +171,7 @@
 /what-gets-measured-gets-managed-and-that-includes-hidden-water-leak/
 /what-happens-when-you-dont-use-water-leak-detection-devices/
 /when-insurance-wont-pay-understandingwater-damage-exclusions-and-howprevention-covers-the-gaps/
+/whole-house-vs-fixture-water-shut-off/
 /why-a-smart-water-leak-detector-is-my-most-valuable-home-upgrade/
 /why-every-building-needs-an-automatic-water-shut-off-valve-and-how-to-choose-the-right-one/
 /why-every-home-needs-an-automatic-water-shut-off-valve/
