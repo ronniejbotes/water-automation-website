@@ -1,6 +1,6 @@
 # Every URL that answers 200 on waterautomation.com, as discovered by
 # tools/discover.mjs. This is the capture manifest for tools/mirror-browser.mjs.
-# Generated 2026-09-08 — 191 routes.
+# Generated 2026-09-08 — 192 routes.
 /
 /2435/
 /about-us/
@@ -165,6 +165,7 @@
 /water-leak-protection-miami/
 /water-leak-protection-new-york/
 /water-leak-protection-washington-dc/
+/water-leaking-from-unit-above/
 /water-sensors-for-insurance/
 /water-vs-home-preventing-water-damage-in-your-house/
 /what-are-the-best-leak-detection-tools-for-commercial-properties/
