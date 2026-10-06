@@ -1,6 +1,6 @@
 # Every URL that answers 200 on waterautomation.com, as discovered by
 # tools/discover.mjs. This is the capture manifest for tools/mirror-browser.mjs.
-# Generated 2026-09-08 — 192 routes.
+# Generated 2026-09-08 — 193 routes.
 /
 /2435/
 /about-us/
@@ -143,6 +143,7 @@
 /thermal-imaging-seeing-water-where-eyes-cant/
 /toilet-leak-repair/
 /toilet-overflow-prevention/
+/toilet-supply-line-leaking/
 /top-10-hidden-plumbing-lines-that-cause-water-damage-and-how-to-stop-leaks-before-they-start/
 /total-under-sink-defense-with-aquahalt-h-c/
 /uncategorized/
