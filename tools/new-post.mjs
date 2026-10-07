@@ -18,6 +18,7 @@
  *   - the meta description, in <meta>, og/twitter and the schema
  *   - datePublished / dateModified in the schema graph
  *   - the article body, between the post-content widget's open and close tags
+ *   - the "See also" block, made for the new post by tools/see-also.mjs
  *
  * Checked rather than swapped: the author. A post carries no author's name
  * (the owner's rule, 7 October 2026), and in the schema graph its author is the
@@ -31,11 +32,13 @@
  * so it looks identical — but 147 of 183 pages currently have no <h1> at all,
  * and there is no reason to reproduce that on a page we are writing from scratch.
  *
- * The "See also" grid is carried across unchanged, because the brief is that new
- * posts match the existing ones. Note what that means: the grid renders four
- * other posts in full, so a new post inherits roughly 32,000 characters of text
- * belonging to other pages. That is a template-level problem, identical on all
- * 141 posts that have it, and fixing it is a separate job from publishing.
+ * The "See also" block is the one every other post carries: at most five links,
+ * each a title and the linked post's own meta description, chosen from the new
+ * post's topic by the rule at the top of tools/see-also.mjs. It is chosen from
+ * the posts already on the site plus this batch, so it is the block that
+ * tools/apply-content.mjs would give the post too. The posts before the new
+ * one in its topic only start linking to it when apply-content.mjs next runs,
+ * which is why that is the next step this script prints.
  *
  *   node tools/new-post.mjs posts.json          # build every post in the file
  *   node tools/new-post.mjs posts.json --dry    # report without writing
@@ -44,9 +47,13 @@
  *   { slug, title, metaDescription, excerpt, bodyFile, datePublished, dateModified }
  */
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {
+  loadPosts, post, openingSentence, chooseLinks, linkable, seeAlsoMarkup, swapSeeAlso,
+  SEE_ALSO_OPEN, SEE_ALSO_CLOSE,
+} from './see-also.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
@@ -59,8 +66,8 @@ if (!SPEC) {
 }
 
 // The donor. Chosen because it is a plain post on the standard template with no
-// unusual widgets, and it is topically adjacent so its "See also" picks are not
-// absurd on the new pages.
+// unusual widgets. Its own "See also" block is replaced, so its links do not
+// carry over to the new page.
 const DONOR_SLUG = 'battery-powered-water-leak-detector-vs-smart-home-systems'
 const DONOR_TITLE_SHORT = 'Battery Powered Water Leak Detectors vs Smart Home Systems'
 const DONOR_TITLE_LONG = 'Battery-Powered Water Leak Detectors vs Smart Home Systems: Which Is Better?'
@@ -106,6 +113,22 @@ const matchingClose = (html, start) => {
 const posts = JSON.parse(await readFile(resolve(SPEC), 'utf8'))
 let built = 0
 const report = []
+
+// What a "See also" block can link to: every post already on the site, and
+// this batch, which takes the place of any post it rebuilds. A batch post is
+// read from its spec and body, as its page will publish them.
+const batch = posts.map((p) => {
+  const bodyPath = p.bodyFile && resolve(p.bodyFile)
+  return post({
+    slug: p.slug,
+    title: p.title,
+    description: p.metaDescription,
+    date: p.datePublished || DONOR_PUBLISHED,
+    opening: bodyPath && existsSync(bodyPath) ? openingSentence(readFileSync(bodyPath, 'utf8')) : '',
+  })
+})
+const onSite = await loadPosts((rel) => (existsSync(join(ROOT, rel)) ? readFileSync(join(ROOT, rel), 'utf8') : ''))
+const registry = [...onSite.filter((e) => !batch.some((b) => b.slug === e.slug)), ...batch]
 
 for (const p of posts) {
   for (const k of ['slug', 'title', 'metaDescription', 'bodyFile']) {
@@ -177,12 +200,22 @@ for (const p of posts) {
   if (end === -1) { console.error(`${p.slug}: could not find end of post-content widget`); process.exit(1) }
   html = html.slice(0, openEnd) + '\n' + body + '\n\t\t\t\t' + html.slice(end - 6)
 
+  // 8. the "See also" block, in place of the donor's. It comes after the body
+  //    on the page, so the body's position, used below, does not move.
+  const { topic, links } = chooseLinks(registry, p.slug, html)
+  const withBlock = swapSeeAlso(html, seeAlsoMarkup(links))
+  if (!withBlock) { console.error(`${p.slug}: no "See also" block or grid found in the donor`); process.exit(1) }
+  html = withBlock
+
   // sanity: the donor's identity must be completely gone from everything this
   // script rewrote. The article body is left out of the check: it is the
   // author's own text, and a new post may link to the donor post like any other
   // page. A body citing /battery-powered-water-leak-detector-vs-smart-home-systems/
-  // is a link, not leftover identity, and must not stop the build.
-  const rewritten = html.slice(0, openEnd) + html.slice(openEnd + 1 + body.length)
+  // is a link, not leftover identity, and must not stop the build. The "See
+  // also" block is left out for the same reason: it may link to the donor too.
+  const withoutBody = html.slice(0, openEnd) + html.slice(openEnd + 1 + body.length)
+  const rewritten =
+    withoutBody.slice(0, withoutBody.indexOf(SEE_ALSO_OPEN)) + withoutBody.slice(withoutBody.indexOf(SEE_ALSO_CLOSE))
   for (const [what, needle] of [
     ['donor slug', DONOR_SLUG],
     ['donor title', DONOR_TITLE_LONG],
@@ -219,6 +252,9 @@ for (const p of posts) {
     bodyBytes: body.length,
     pageBytes: html.length,
     existed: existsSync(outFile),
+    topic,
+    links: links.length,
+    linkable: linkable(batch.find((b) => b.slug === p.slug)),
   })
 
   if (!DRY) {
@@ -232,8 +268,10 @@ console.log(`${DRY ? 'Would build' : 'Built'} ${posts.length} post(s) from /${DO
 for (const r of report) {
   console.log(`${r.existed ? 'overwrite' : 'new      '}  /${r.slug}/`)
   console.log(`           title ${r.titleChars} chars | meta ${r.metaChars} chars | body ${r.bodyBytes}B | page ${(r.pageBytes / 1024).toFixed(0)}KB`)
+  console.log(`           see also: ${r.links} link(s) from the ${r.topic} topic`)
   if (r.titleChars > 62) console.log(`           WARNING: title is long for a SERP`)
   if (r.metaChars > 158) console.log(`           WARNING: meta description is long for a SERP`)
+  if (!r.linkable) console.log(`           WARNING: the meta description quotes a price, so no "See also" block will link here`)
 }
 // ---------------------------------------------------------------------------
 // Register the new routes
@@ -289,4 +327,7 @@ if (!DRY) {
 }
 
 console.log(`\n--- ${DRY ? 'dry run' : `${built} written`} ---`)
-if (!DRY) console.log('Next: npm run verify, then npm run linkcheck')
+if (!DRY) {
+  console.log('Next: node tools/apply-content.mjs, so the posts before it in its topic link to it;')
+  console.log('      then node tools/see-also.mjs --check, npm run verify and npm run linkcheck')
+}

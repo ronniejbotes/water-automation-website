@@ -28,6 +28,9 @@
  *     script knows a block is already in place. Do not remove the markers.
  *   - Replacements carry `expect`. If the count moves, the capture changed
  *     underneath the edit and it needs re-reading before it is trusted.
+ *   - A swap replaces one element that differs from page to page with markup
+ *     made for each page, between the same markers as an insert. Its `find`
+ *     must locate the element on every listed page, or the run stops.
  *
  *   node tools/apply-content.mjs
  *   node tools/apply-content.mjs --dry     # report what would change
@@ -158,6 +161,36 @@ for (const block of CONTENT) {
       html = html.split(block.from).join(block.to)
       edits.set(abs, html)
       applied += hits
+    } else if (block.kind === 'swap') {
+      // Markup made for this page by the block's render(), which reads other
+      // pages through the same in-memory view as everything else here, so it
+      // sees the edits of the blocks before it. Once the markers are in, a
+      // re-run re-syncs what sits between them, exactly as for an insert.
+      const desired = `\n${await block.render(rel, (r) => read(join(DIR, r)))}\n`
+      if (html.includes(open(block.id))) {
+        const a = html.indexOf(open(block.id))
+        const b = html.indexOf(close(block.id))
+        if (b === -1) {
+          problems.push(`${rel}: opening marker present but closing marker missing`)
+          continue
+        }
+        if (html.slice(a + open(block.id).length, b) === desired) {
+          already++
+          continue
+        }
+        html = html.slice(0, a + open(block.id).length) + desired + html.slice(b)
+        edits.set(abs, html)
+        resynced++
+        continue
+      }
+      const span = block.find(html)
+      if (!span) {
+        problems.push(`${rel}: the element to replace was not found`)
+        continue
+      }
+      html = html.slice(0, span[0]) + open(block.id) + desired + close(block.id) + html.slice(span[1])
+      edits.set(abs, html)
+      applied++
     } else {
       problems.push(`${rel}: unknown kind "${block.kind}"`)
     }

@@ -132,7 +132,18 @@ It is in `post-sitemap.xml` and internally linked. It undermines the honesty pos
 that is the actual differentiator. **Recommend deleting the page and 410-ing the URL.**
 That needs a client decision, not a code change.
 
-### 4. The "See also" grid is the biggest SEO lever on the site
+### 4. ~~The "See also" grid is the biggest SEO lever on the site~~ (done 7 October 2026)
+
+> **Done.** On all 136 posts that carry it, the grid is now at most five links, each the
+> linked post's title and its own meta description, chosen from the post's topic. The
+> rule and its reasons are at the top of `tools/see-also.mjs`; `tools/content.mjs` applies
+> it, so a rebuild keeps it, and `tools/new-post.mjs` gives new posts the same block.
+> `node tools/see-also.mjs --check` re-runs the test on every post. Measured in a browser,
+> a post's own text went from a median 10% of the page's words to 71%. The template's
+> "related resource" paragraph is gone from the four template posts and their `/blog/`
+> cards.
+
+The original note follows, for the record.
 
 **141 of 182 pages** embed a loop grid that renders four other posts *in full*. Median
 **32,561 characters** of duplicated text against a **3,210-character** post body — so

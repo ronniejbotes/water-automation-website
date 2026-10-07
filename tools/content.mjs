@@ -17,7 +17,12 @@
  *                      exactly once in the file. Wrapped in
  *                      <!-- wa:content:ID --> markers, which is how re-running
  *                      is made a no-op.
+ *   kind: 'swap'     - replace the element `find(html)` locates with markup
+ *                      that `render(file, read)` makes for that page, inside
+ *                      the same markers as an insert. For a block whose
+ *                      content differs on every page, such as "See also".
  */
+import { SEE_ALSO_ID, seeAlsoFiles, findSeeAlso, renderSeeAlso } from './see-also.mjs'
 
 // ---------------------------------------------------------------------------
 // Battery life: the site has to say one thing
@@ -727,4 +732,93 @@ const AUTHOR = [
   },
 ]
 
-export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...BLOG_INDEX, ...AUTHOR]
+// ---------------------------------------------------------------------------
+// "See also": a title and one line per link, not four whole posts
+// ---------------------------------------------------------------------------
+//
+// Under every post WordPress printed an Elementor loop grid of four other posts
+// IN FULL: on almost every post, the same four, the newest at the time of the
+// capture. On a typical post most of the words on the page belonged to other
+// articles, so Google saw a set of near-identical pages each saying little of
+// its own; it is the biggest reason it crawled so many of these pages and left
+// them out of the index.
+//
+// The grid is replaced on every post that has it with at most five links, each
+// the linked post's title and one line from its own meta description, chosen
+// from the same topic. The rule, and why it is the rule, is at the top of
+// tools/see-also.mjs, which also runs the check: node tools/see-also.mjs --check.
+// The "See also" heading above the grid is kept.
+//
+// It goes after every other block, so the titles and descriptions it quotes are
+// the ones the blocks above have already corrected, and before the boilerplate
+// below, so those counts see the posts' own text and not copies inside a grid.
+
+const SEE_ALSO = [
+  {
+    id: SEE_ALSO_ID,
+    kind: 'swap',
+    files: seeAlsoFiles(),
+    find: findSeeAlso,
+    render: renderSeeAlso,
+    why: `Four whole articles under every post made most of each page someone
+      else's words, and made every post look like every other. Titles and one
+      line each keep the onward links and drop the duplication. Five at most,
+      from the post's own topic, so the links are worth following, and spread
+      evenly, so each post is linked from about five others instead of four
+      posts being linked from all of them.`,
+  },
+]
+
+// ---------------------------------------------------------------------------
+// The "related resource" boilerplate in the four template posts
+// ---------------------------------------------------------------------------
+//
+// The four posts the old grid printed everywhere were spun from one template,
+// and each still carries one paragraph of the template's own linking
+// instruction: "See the client's related resource for the next layer of
+// information...". It is addressed to whoever was filling in the template, not
+// to a reader, and its anchor text says nothing about where it goes.
+//
+// Removed wherever the posts' text appears: their own pages and /blog/, whose
+// archive cards render each post's body. That is why these are sitewide with
+// exact counts rather than named files: if WordPress moves the four down the
+// archive, the paragraph is still found and still counted. Taken with the blank
+// lines after it, so the post keeps one gap between paragraphs, not two.
+//
+// The paragraph has two forms, differing only in where it links: one post sends
+// it to /why-every-home-needs-an-automatic-water-shut-off-valve/, the other
+// three to /shop/. The sentence beside it in the same posts ("Review the
+// relevant service information before requesting proposals...") is a separate
+// paragraph and is not touched here.
+
+const RELATED_RESOURCE = (href) =>
+  `<p class="wp-block-paragraph">See the client’s <a href="${href}">related resource</a> for the next ` +
+  'layer of information. Connecting educational content to a real service or product page helps ' +
+  'the reader move from research to an appropriate, supportable action.</p>\n\n\n\n'
+
+const BOILERPLATE = [
+  {
+    id: 'related-resource-home-valve',
+    kind: 'replace',
+    allHtml: true,
+    from: RELATED_RESOURCE('/why-every-home-needs-an-automatic-water-shut-off-valve/'),
+    to: '',
+    expect: 2,
+    why: `The form in /automatic-shutoff-vacation-home/: once in the post, once
+      in its card on /blog/.`,
+  },
+  {
+    id: 'related-resource-shop',
+    kind: 'replace',
+    allHtml: true,
+    from: RELATED_RESOURCE('/shop/'),
+    to: '',
+    expect: 6,
+    why: `The form in /water-leak-protection-for-new-construction-specify-early/,
+      /fixture-level-leak-detection-apartments/ and
+      /commercial-restroom-leak-detection-a-facility-plan/: once in each post,
+      once in each one's card on /blog/.`,
+  },
+]
+
+export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...BLOG_INDEX, ...AUTHOR, ...SEE_ALSO, ...BOILERPLATE]
