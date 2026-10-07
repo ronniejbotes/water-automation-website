@@ -615,17 +615,26 @@ const BLOG_INDEX = [
 // inherited the login. That script now stops if a new post would carry an
 // author's name.
 //
-// In the schema the author is now the Organization the graph already describes
-// on every page, referenced by its @id exactly as the Article's publisher is.
-// The Person node goes with it: once the author no longer points at it, nothing
-// on the page does.
+// The other 24 posts named the founder in the same three places, as "Greg
+// Cappizi". The rule covers him too: no person's name as a post's author. The
+// spelling is wrong as well, which is one more reason to take it off: the
+// site's own copy spells him Capizzi. His Person node also carries a sameAs
+// pointing at the homepage, but it too exists only to be the author.
 //
-// Each string is byte-identical on all 117 pages, so each block is a sitewide
-// replace that has to land exactly 117 times.
+// In the schema the author of all 141 is now the Organization the graph
+// already describes on every page, referenced by its @id exactly as the
+// Article's publisher is. Each Person node goes with it: once the author no
+// longer points at it, nothing on the page does.
 //
-// Deliberately NOT touched: the 24 posts whose author metadata names "Greg
-// Cappizi". That is a person's name rather than a login, and outside this
-// change.
+// Each string is byte-identical on every page that carries it, so each block
+// is a sitewide replace with an exact count: 117 for the login, 24 for the
+// founder.
+//
+// Deliberately NOT touched: the founder named as the founder rather than as a
+// post's author. That is the founder lines and his photos on /about-us/ and
+// /contact-us/, the Organization's founder in the /checkout/ schema, and the
+// sentence crediting him in /plan-before-not-after-water-damage/, which
+// /blog/page/11/ repeats.
 
 // The schema graph is JSON with every "/" escaped as "\/", the way WordPress
 // writes it. The strings below are written plainly and escaped once.
@@ -634,6 +643,9 @@ const AUTHOR_PERSON_ID = 'https://www.waterautomation.com/#/schema/person/996524
 const AUTHOR_AVATAR =
   'https://secure.gravatar.com/avatar/6519d201244ccfe5c62c9161e3d12b3182f5c472204e5d32fe1aee407ef21536?s=96&d=mm&r=g'
 const ORGANIZATION_ID = 'https://www.waterautomation.com/#organization'
+const FOUNDER_PERSON_ID = 'https://www.waterautomation.com/#/schema/person/4e6d0bfca15af3f12a340891175e8f91'
+const FOUNDER_AVATAR =
+  'https://secure.gravatar.com/avatar/dc49edfbf0fb42a9689a8ce5a5da6bc5467dd3a4c2cfdd2a934947f1ecfe71fc?s=96&d=mm&r=g'
 
 const AUTHOR = [
   {
@@ -674,6 +686,44 @@ const AUTHOR = [
       Gravatar as its image, and the login again as the image caption. It is the
       last node in the graph, so it goes with the comma before it and the graph
       stays valid JSON.`,
+  },
+  {
+    id: 'author-founder-meta',
+    kind: 'replace',
+    allHtml: true,
+    from: '\t<meta name="author" content="Greg Cappizi" />\n',
+    to: '',
+    expect: 24,
+    why: `The founder's name, misspelled, as the author meta tag. Removed whole,
+      with its line, as for the login.`,
+  },
+  {
+    id: 'author-founder-schema-organization',
+    kind: 'replace',
+    allHtml: true,
+    from: ld(`"author":{"name":"Greg Cappizi","@id":"${FOUNDER_PERSON_ID}"}`),
+    to: ld(`"author":{"@id":"${ORGANIZATION_ID}"}`),
+    expect: 24,
+    why: `The Article's author on the same 24 posts: the Organization, by @id,
+      exactly as on the other 117.`,
+  },
+  {
+    id: 'author-founder-schema-person',
+    kind: 'replace',
+    allHtml: true,
+    from: ld(
+      `,{"@type":"Person","@id":"${FOUNDER_PERSON_ID}","name":"Greg Cappizi",` +
+        `"image":{"@type":"ImageObject","inLanguage":"en-US","@id":"${FOUNDER_AVATAR}",` +
+        `"url":"${FOUNDER_AVATAR}","contentUrl":"${FOUNDER_AVATAR}","caption":"Greg Cappizi"},` +
+        `"sameAs":["https://www.waterautomation.com/"]}`
+    ),
+    to: '',
+    expect: 24,
+    why: `The Person node behind that author: the misspelled name, a Gravatar,
+      the name again as the caption, and a sameAs pointing at the homepage. It
+      is the last node in the graph, so it goes with the comma before it. The
+      founder in the /checkout/ schema is a different object, the
+      Organization's founder, and stays.`,
   },
 ]
 
