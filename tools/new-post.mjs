@@ -19,6 +19,13 @@
  *   - datePublished / dateModified in the schema graph
  *   - the article body, between the post-content widget's open and close tags
  *
+ * Checked rather than swapped: the author. A post carries no author's name
+ * (the owner's rule, 7 October 2026), and in the schema graph its author is the
+ * Organization, by @id. The donor already says so, through the author-* blocks
+ * in tools/content.mjs, and the build stops if a post would carry an author meta
+ * tag, an article:author tag, a Person node, an author archive link, or any
+ * schema author but the Organization.
+ *
  * One deliberate difference from the donor: the on-page title heading is emitted
  * as <h1>, not the <h2> the template ships. The theme styles headings by class,
  * so it looks identical — but 147 of 183 pages currently have no <h1> at all,
@@ -67,6 +74,10 @@ const CONTENT_OPEN = '<div class="elementor-element elementor-element-3bf7867 el
 const DONOR_IMG = '/wp-content/uploads/2026/05/Inspecting-water-damage-together.png'
 const DONOR_IMG_W = '1536'
 const DONOR_IMG_H = '1024'
+
+// The one schema author a post may carry: the Organization the graph already
+// describes, by its @id, escaped the way the graph escapes it.
+const ORG_AUTHOR = '"author":{"@id":"https:\\/\\/www.waterautomation.com\\/#organization"}'
 
 const donorPath = join(ROOT, DONOR_SLUG, 'index.html')
 if (!existsSync(donorPath)) {
@@ -178,6 +189,24 @@ for (const p of posts) {
     ['donor description', DONOR_DESC],
   ]) {
     if (rewritten.includes(needle)) { console.error(`${p.slug}: ${what} still present after rewrite`); process.exit(1) }
+  }
+
+  // The page must carry no author's name either. The donor carries none once
+  // tools/apply-content.mjs has run; a donor re-captured from WordPress and not
+  // yet put through it carries the old login again, and so would every post
+  // built from it.
+  const schemaAuthors = rewritten.match(/"author":\{[^}]*\}/g) || []
+  for (const [what, found] of [
+    ['an author meta tag', rewritten.includes('<meta name="author"')],
+    ['an article:author tag', rewritten.includes('article:author')],
+    ['a Person node in the schema graph', rewritten.includes('"@type":"Person"')],
+    ['a link to an author archive', rewritten.includes('/author/')],
+    ['the schema author is not the Organization', schemaAuthors.length !== 1 || schemaAuthors[0] !== ORG_AUTHOR],
+  ]) {
+    if (found) {
+      console.error(`${p.slug}: ${what}. Posts carry no author's name, so the donor must not either (see the author-* blocks in tools/content.mjs).`)
+      process.exit(1)
+    }
   }
 
   const outDir = join(ROOT, p.slug)

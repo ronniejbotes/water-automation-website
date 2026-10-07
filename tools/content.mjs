@@ -599,4 +599,82 @@ const BLOG_INDEX = [
   },
 ]
 
-export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...BLOG_INDEX]
+// ---------------------------------------------------------------------------
+// Post authors: no name on a post, the Organization in the schema
+// ---------------------------------------------------------------------------
+//
+// The owner's rule, 7 October 2026: a blog post carries no author's name
+// unless one is genuinely necessary, and never a login or username. None is
+// necessary on these posts.
+//
+// 117 posts named an old WordPress login as their author, in three places: the
+// author meta tag, the Article's author in the schema graph, and a Person node,
+// with a Gravatar image, that existed only to be that author. It never showed
+// as a visible byline, and no page links an author archive. The 117 include the
+// donor post that tools/new-post.mjs clones, so every post built from it
+// inherited the login. That script now stops if a new post would carry an
+// author's name.
+//
+// In the schema the author is now the Organization the graph already describes
+// on every page, referenced by its @id exactly as the Article's publisher is.
+// The Person node goes with it: once the author no longer points at it, nothing
+// on the page does.
+//
+// Each string is byte-identical on all 117 pages, so each block is a sitewide
+// replace that has to land exactly 117 times.
+//
+// Deliberately NOT touched: the 24 posts whose author metadata names "Greg
+// Cappizi". That is a person's name rather than a login, and outside this
+// change.
+
+// The schema graph is JSON with every "/" escaped as "\/", the way WordPress
+// writes it. The strings below are written plainly and escaped once.
+const ld = (s) => s.split('/').join('\\/')
+const AUTHOR_PERSON_ID = 'https://www.waterautomation.com/#/schema/person/996524b5f2cda4517e7d1ddbb7db1c8d'
+const AUTHOR_AVATAR =
+  'https://secure.gravatar.com/avatar/6519d201244ccfe5c62c9161e3d12b3182f5c472204e5d32fe1aee407ef21536?s=96&d=mm&r=g'
+const ORGANIZATION_ID = 'https://www.waterautomation.com/#organization'
+
+const AUTHOR = [
+  {
+    id: 'author-meta',
+    kind: 'replace',
+    allHtml: true,
+    from: '\t<meta name="author" content="RonnieScale" />\n',
+    to: '',
+    expect: 117,
+    why: `The author meta tag, removed whole rather than reworded: with no person
+      to name, it has nothing to say. Taken with its own line, so the head keeps
+      no blank line where it was.`,
+  },
+  {
+    id: 'author-schema-organization',
+    kind: 'replace',
+    allHtml: true,
+    from: ld(`"author":{"name":"RonnieScale","@id":"${AUTHOR_PERSON_ID}"}`),
+    to: ld(`"author":{"@id":"${ORGANIZATION_ID}"}`),
+    expect: 117,
+    why: `The Article's author. It pointed at a Person named after the login; it
+      now points at the Organization node in the same graph, named "Water
+      Automation". A reference by @id rather than a copy of the name, so the
+      author can never disagree with the Organization it names.`,
+  },
+  {
+    id: 'author-schema-person',
+    kind: 'replace',
+    allHtml: true,
+    from: ld(
+      `,{"@type":"Person","@id":"${AUTHOR_PERSON_ID}","name":"RonnieScale",` +
+        `"image":{"@type":"ImageObject","inLanguage":"en-US","@id":"${AUTHOR_AVATAR}",` +
+        `"url":"${AUTHOR_AVATAR}","contentUrl":"${AUTHOR_AVATAR}","caption":"RonnieScale"}}`
+    ),
+    to: '',
+    expect: 117,
+    why: `The Person node the author used to point at: the login as its name, a
+      Gravatar as its image, and the login again as the image caption. It is the
+      last node in the graph, so it goes with the comma before it and the graph
+      stays valid JSON.`,
+  },
+]
+
+export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...BLOG_INDEX, ...AUTHOR]
