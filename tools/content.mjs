@@ -605,6 +605,29 @@ const BLOG_INDEX = [
 ]
 
 // ---------------------------------------------------------------------------
+// Links to posts written after the capture, from captured copy
+// ---------------------------------------------------------------------------
+//
+// A new post is linked from the existing pages it supports, on words those
+// pages already carry, so no sentence changes. A link from a product spec block
+// lives in that block's content/specs-*.html file; a link from captured copy
+// needs a block here.
+
+const NEW_POST_LINKS = [
+  {
+    id: 'link-fort-lauderdale-short-term-rental',
+    kind: 'replace',
+    files: ['water-leak-protection-fort-lauderdale/index.html'],
+    from: 'vacation rentals turn over with gaps between guests,',
+    to: '<a href="/short-term-rental-water-leak-prevention/">vacation rentals turn over with gaps between guests</a>,',
+    expect: 1,
+    why: `The Fort Lauderdale page already says that vacation rentals turn over
+      with gaps between guests. /short-term-rental-water-leak-prevention/ is the
+      plan for exactly those gaps, so those words link to it.`,
+  },
+]
+
+// ---------------------------------------------------------------------------
 // Post authors: no name on a post, the Organization in the schema
 // ---------------------------------------------------------------------------
 //
@@ -860,4 +883,4 @@ const BOILERPLATE = [
   ),
 ]
 
-export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...BLOG_INDEX, ...AUTHOR, ...SEE_ALSO, ...BOILERPLATE]
+export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...BLOG_INDEX, ...NEW_POST_LINKS, ...AUTHOR, ...SEE_ALSO, ...BOILERPLATE]

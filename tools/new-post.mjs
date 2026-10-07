@@ -17,8 +17,18 @@
  *     the on-page heading
  *   - the meta description, in <meta>, og/twitter and the schema
  *   - datePublished / dateModified in the schema graph
- *   - the article body, between the post-content widget's open and close tags
+ *   - the article body, between the post-content widget's open and close tags,
+ *     and the schema's wordCount, counted from it
  *   - the "See also" block, made for the new post by tools/see-also.mjs
+ *   - the featured image: og:image with its size and type, the schema's
+ *     ImageObject, the hero above the title, written the way WordPress writes
+ *     a featured image, with the alt text the spec gives, and the
+ *     "featuredImage" in Elementor's frontend config, beside the title there
+ *     in its percent-encoded form
+ *
+ * The image is required. The donor's own is a photo of two people catching water
+ * from a leaking ceiling, with empty alt text, and a post built without an image
+ * of its own would show it.
  *
  * Checked rather than swapped: the author. A post carries no author's name
  * (the owner's rule, 7 October 2026), and in the schema graph its author is the
@@ -44,11 +54,12 @@
  *   node tools/new-post.mjs posts.json --dry    # report without writing
  *
  * posts.json is an array of:
- *   { slug, title, metaDescription, excerpt, bodyFile, datePublished, dateModified }
+ *   { slug, title, metaDescription, excerpt, bodyFile, datePublished, dateModified,
+ *     image: { path, width, height, alt } }
  */
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
-import { existsSync, readFileSync } from 'node:fs'
-import { join, resolve, dirname } from 'node:path'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { join, resolve, dirname, basename, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   loadPosts, post, openingSentence, chooseLinks, linkable, seeAlsoMarkup, swapSeeAlso,
@@ -74,6 +85,7 @@ const DONOR_TITLE_LONG = 'Battery-Powered Water Leak Detectors vs Smart Home Sys
 const DONOR_DESC = 'Compare battery powered water leak detectors vs smart home systems to find the best protection for your property.'
 const DONOR_PUBLISHED = '2026-05-13T20:42:43+00:00'
 const DONOR_MODIFIED = '2026-05-13T20:43:01+00:00'
+const DONOR_WORD_COUNT = '"wordCount":1079'
 const CONTENT_OPEN = '<div class="elementor-element elementor-element-3bf7867 elementor-widget elementor-widget-theme-post-content"'
 
 // The donor's featured image, in the two forms the page carries it: plain in the
@@ -81,6 +93,14 @@ const CONTENT_OPEN = '<div class="elementor-element elementor-element-3bf7867 el
 const DONOR_IMG = '/wp-content/uploads/2026/05/Inspecting-water-damage-together.png'
 const DONOR_IMG_W = '1536'
 const DONOR_IMG_H = '1024'
+
+// The hero above the title shows the donor's image as WordPress's 1024px size,
+// with every size of it in a srcset. Swapping the plain path alone changes only
+// the last entry of that srcset, which leaves the donor's photo, with empty alt
+// text, as what most screens show; so the whole <img> is replaced.
+const DONOR_HERO_SRC = '/wp-content/uploads/2026/05/Inspecting-water-damage-together-1024x683.png'
+const DONOR_IMG_STEM = 'Inspecting-water-damage-together'
+const MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif' }
 
 // The one schema author a post may carry: the Organization the graph already
 // describes, by its @id, escaped the way the graph escapes it.
@@ -96,6 +116,38 @@ const donor = await readFile(donorPath, 'utf8')
 // Escape for use in a double-quoted HTML attribute and in JSON-LD.
 const attr = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const jsonStr = (s) => JSON.stringify(s).slice(1, -1)
+
+const reEscape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * The hero <img> for a post's own image, written as WordPress writes a featured
+ * image: its largest size no wider than 1024px as the src, shown at most 800px
+ * wide, and every size of it on disk in the srcset.
+ */
+const heroImg = ({ path, width, height, alt }) => {
+  const ext = extname(path)
+  const sized = new RegExp(`^${reEscape(basename(path, ext))}-(\\d+)x(\\d+)${reEscape(ext)}$`)
+  const sizes = readdirSync(join(ROOT, dirname(path)))
+    .map((f) => f.match(sized))
+    .filter(Boolean)
+    .map((m) => ({ src: `${dirname(path)}/${m[0]}`, w: Number(m[1]), h: Number(m[2]) }))
+  const all = [...sizes, { src: path, w: width, h: height }]
+  const large = all.filter((s) => s.w <= 1024).sort((a, b) => b.w - a.w)[0] || all.at(-1)
+  const w = Math.min(800, large.w)
+  const h = Math.round((w * large.h) / large.w)
+  const srcset = [large, ...all.filter((s) => s !== large).sort((a, b) => a.w - b.w)]
+    .map((s) => `${s.src} ${s.w}w`)
+    .join(', ')
+  return {
+    src: large.src,
+    tag: `<img width="${w}" height="${h}" src="${large.src}" class="attachment-large size-large" alt="${attr(alt)}" srcset="${srcset}" sizes="(max-width: ${w}px) 100vw, ${w}px" />`,
+  }
+}
+
+// Elementor's frontend config names the post too, for its share buttons: the
+// title percent-encoded the way PHP's rawurlencode writes it, and the hero as
+// "featuredImage".
+const rawurlencode = (s) => encodeURIComponent(s).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
 
 /** Find the close of the div that starts at `start`, by depth-counting. */
 const matchingClose = (html, start) => {
@@ -134,6 +186,14 @@ for (const p of posts) {
   for (const k of ['slug', 'title', 'metaDescription', 'bodyFile']) {
     if (!p[k]) { console.error(`${p.slug || '(no slug)'}: missing ${k}`); process.exit(1) }
   }
+  for (const k of ['path', 'width', 'height', 'alt']) {
+    if (!p.image?.[k]) {
+      console.error(`${p.slug}: missing image.${k}. Every post needs its own image, described, or it shows the donor's.`)
+      process.exit(1)
+    }
+  }
+  if (!existsSync(join(ROOT, p.image.path))) { console.error(`${p.slug}: image not found: ${p.image.path}`); process.exit(1) }
+  if (!MIME[extname(p.image.path).toLowerCase()]) { console.error(`${p.slug}: unknown image type: ${p.image.path}`); process.exit(1) }
   const bodyPath = resolve(p.bodyFile)
   if (!existsSync(bodyPath)) { console.error(`${p.slug}: bodyFile not found — ${bodyPath}`); process.exit(1) }
   const body = (await readFile(bodyPath, 'utf8')).trim()
@@ -148,9 +208,11 @@ for (const p of posts) {
   // 1. identity: slug everywhere it appears
   html = html.split(DONOR_SLUG).join(p.slug)
 
-  // 2. title, longest form first so the short form cannot eat part of it
+  // 2. title, longest form first so the short form cannot eat part of it, then
+  //    the percent-encoded form in Elementor's frontend config
   html = html.split(DONOR_TITLE_LONG).join(attr(p.title))
   html = html.split(DONOR_TITLE_SHORT).join(attr(p.title))
+  html = html.split(rawurlencode(DONOR_TITLE_SHORT)).join(rawurlencode(p.title))
 
   // 3. description
   html = html.split(DONOR_DESC).join(attr(p.metaDescription))
@@ -159,27 +221,29 @@ for (const p of posts) {
   html = html.split(DONOR_PUBLISHED).join(p.datePublished || DONOR_PUBLISHED)
   html = html.split(DONOR_MODIFIED).join(p.dateModified || p.datePublished || DONOR_MODIFIED)
 
-  // 5. featured image, if the spec names one. Swapped in both forms the page uses:
-  //    the plain URL in og:image, and the backslash-escaped URL inside the schema
-  //    graph. Without this a new post inherits the donor's image in every share
-  //    card and every structured-data consumer.
-  if (p.image?.path) {
-    const esc = (s) => s.split('/').join('\\/')
-    html = html.split(DONOR_IMG).join(p.image.path)
-    html = html.split(esc(DONOR_IMG)).join(esc(p.image.path))
-    if (p.image.width) {
-      html = html.replace(
-        `<meta property="og:image:width" content="${DONOR_IMG_W}" />`,
-        `<meta property="og:image:width" content="${p.image.width}" />`
-      )
-    }
-    if (p.image.height) {
-      html = html.replace(
-        `<meta property="og:image:height" content="${DONOR_IMG_H}" />`,
-        `<meta property="og:image:height" content="${p.image.height}" />`
-      )
-    }
-    html = html.replace(/"width":1536,"height":1024/g, `"width":${p.image.width || 1536},"height":${p.image.height || 864}`)
+  // 5. the featured image. The hero above the title first, whole, while it still
+  //    carries the donor's srcset. Then the plain URL in og:image and the
+  //    backslash-escaped URL inside the schema graph, the og:image size and
+  //    type, and the schema ImageObject's size. Without this a new post shows
+  //    the donor's photo, and names it in every share card and every
+  //    structured-data consumer.
+  const hero = new RegExp(`<img\\b[^>]*\\bsrc="${reEscape(DONOR_HERO_SRC)}"[^>]*>`, 'g')
+  const heroes = (html.match(hero) || []).length
+  if (heroes !== 1) { console.error(`${p.slug}: expected the donor's hero image once, found ${heroes}`); process.exit(1) }
+  const heroNew = heroImg(p.image)
+  html = html.replace(hero, () => heroNew.tag)
+  const esc = (s) => s.split('/').join('\\/')
+  html = html.split(DONOR_IMG).join(p.image.path)
+  html = html.split(esc(DONOR_IMG)).join(esc(p.image.path))
+  for (const [from, to] of [
+    [`"featuredImage":"${esc(DONOR_HERO_SRC)}"`, `"featuredImage":"${esc(heroNew.src)}"`],
+    [`<meta property="og:image:width" content="${DONOR_IMG_W}" />`, `<meta property="og:image:width" content="${p.image.width}" />`],
+    [`<meta property="og:image:height" content="${DONOR_IMG_H}" />`, `<meta property="og:image:height" content="${p.image.height}" />`],
+    ['<meta property="og:image:type" content="image/png" />', `<meta property="og:image:type" content="${MIME[extname(p.image.path).toLowerCase()]}" />`],
+    [`"width":${DONOR_IMG_W},"height":${DONOR_IMG_H}`, `"width":${p.image.width},"height":${p.image.height}`],
+  ]) {
+    if (html.split(from).length - 1 !== 1) { console.error(`${p.slug}: expected once in the donor: ${from}`); process.exit(1) }
+    html = html.replace(from, () => to)
   }
 
   // 6. the on-page title heading: h2 -> h1, same classes so it renders identically
@@ -192,7 +256,17 @@ for (const p of posts) {
   }
   html = html.replace(h2, h1)
 
-  // 7. the article body
+  // 7. the article body, and its word count in the schema graph. The count goes
+  //    in first: the graph sits above the body, and the body's position, taken
+  //    next, is used by the identity check below.
+  if (html.split(DONOR_WORD_COUNT).length - 1 !== 1) { console.error(`${p.slug}: expected once in the donor: ${DONOR_WORD_COUNT}`); process.exit(1) }
+  const words = body
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&[a-z]+;/gi, ' ')
+    .split(/\s+/)
+    .filter((w) => /[A-Za-z0-9]/.test(w)).length
+  html = html.replace(DONOR_WORD_COUNT, () => `"wordCount":${words}`)
   const start = html.indexOf(CONTENT_OPEN)
   if (start === -1) { console.error(`${p.slug}: post-content widget not found in donor`); process.exit(1) }
   const openEnd = html.indexOf('>', start) + 1
@@ -220,6 +294,8 @@ for (const p of posts) {
     ['donor slug', DONOR_SLUG],
     ['donor title', DONOR_TITLE_LONG],
     ['donor description', DONOR_DESC],
+    ['donor image', DONOR_IMG_STEM],
+    ['donor title, percent-encoded', rawurlencode(DONOR_TITLE_SHORT)],
   ]) {
     if (rewritten.includes(needle)) { console.error(`${p.slug}: ${what} still present after rewrite`); process.exit(1) }
   }
