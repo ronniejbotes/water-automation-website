@@ -122,7 +122,10 @@ const reEscape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 /**
  * The hero <img> for a post's own image, written as WordPress writes a featured
  * image: its largest size no wider than 1024px as the src, shown at most 800px
- * wide, and every size of it on disk in the srcset.
+ * wide, and every size of it on disk in the srcset that has the image's own
+ * shape. Like WordPress, a size is left out when its height is more than 1px
+ * off the image scaled to its width, so a square crop of a wide photo is never
+ * offered in its place.
  */
 const heroImg = ({ path, width, height, alt }) => {
   const ext = extname(path)
@@ -131,6 +134,7 @@ const heroImg = ({ path, width, height, alt }) => {
     .map((f) => f.match(sized))
     .filter(Boolean)
     .map((m) => ({ src: `${dirname(path)}/${m[0]}`, w: Number(m[1]), h: Number(m[2]) }))
+    .filter((s) => Math.abs(Math.round((s.w * height) / width) - s.h) <= 1)
   const all = [...sizes, { src: path, w: width, h: height }]
   const large = all.filter((s) => s.w <= 1024).sort((a, b) => b.w - a.w)[0] || all.at(-1)
   const w = Math.min(800, large.w)
