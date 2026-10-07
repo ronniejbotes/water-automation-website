@@ -139,9 +139,9 @@ That needs a client decision, not a code change.
 > rule and its reasons are at the top of `tools/see-also.mjs`; `tools/content.mjs` applies
 > it, so a rebuild keeps it, and `tools/new-post.mjs` gives new posts the same block.
 > `node tools/see-also.mjs --check` re-runs the test on every post. Measured in a browser,
-> a post's own text went from a median 10% of the page's words to 71%. The template's
-> "related resource" paragraph is gone from the four template posts and their `/blog/`
-> cards.
+> a post's own text went from a median 10% of the page's words to 71%. The template's two
+> linking paragraphs ("See the client's related resource..." and "Review the relevant
+> service information...") are gone from the four template posts and their `/blog/` cards.
 
 The original note follows, for the record.
 

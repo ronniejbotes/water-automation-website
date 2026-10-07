@@ -770,7 +770,7 @@ const SEE_ALSO = [
 ]
 
 // ---------------------------------------------------------------------------
-// The "related resource" boilerplate in the four template posts
+// The template's linking boilerplate in the four template posts
 // ---------------------------------------------------------------------------
 //
 // The four posts the old grid printed everywhere were spun from one template,
@@ -787,14 +787,37 @@ const SEE_ALSO = [
 //
 // The paragraph has two forms, differing only in where it links: one post sends
 // it to /why-every-home-needs-an-automatic-water-shut-off-valve/, the other
-// three to /shop/. The sentence beside it in the same posts ("Review the
-// relevant service information before requesting proposals...") is a separate
-// paragraph and is not touched here.
+// three to /shop/.
+//
+// Its neighbour from the same template goes too: "Review the relevant service
+// information before requesting proposals. It establishes what the client
+// actually offers...". The same instruction to the template's user, with the
+// same kind of anchor ("the relevant service information"), and a link out
+// labelled only "authoritative resource". Each of the four posts has its own
+// form of it, differing in both links, so it takes four blocks, each counted
+// once in its post and once in that post's card on /blog/.
 
 const RELATED_RESOURCE = (href) =>
   `<p class="wp-block-paragraph">See the client’s <a href="${href}">related resource</a> for the next ` +
   'layer of information. Connecting educational content to a real service or product page helps ' +
   'the reader move from research to an appropriate, supportable action.</p>\n\n\n\n'
+
+const SERVICE_INFORMATION = (href, source) =>
+  `<p class="wp-block-paragraph">Review <a href="${href}">the relevant service information</a> before ` +
+  'requesting proposals. It establishes what the client actually offers. For broader context, consult ' +
+  `this <a href="${source}">authoritative resource</a>. General guidance does not replace a ` +
+  'site-specific evaluation, manufacturer instructions, applicable codes or qualified professional ' +
+  'advice.</p>\n\n\n\n'
+
+const serviceInformation = (post, href, source) => ({
+  id: `service-information-${post}`,
+  kind: 'replace',
+  allHtml: true,
+  from: SERVICE_INFORMATION(href, source),
+  to: '',
+  expect: 2,
+  why: `The form in /${post}/: once in the post, once in its card on /blog/.`,
+})
 
 const BOILERPLATE = [
   {
@@ -819,6 +842,22 @@ const BOILERPLATE = [
       /commercial-restroom-leak-detection-a-facility-plan/: once in each post,
       once in each one's card on /blog/.`,
   },
+  serviceInformation('automatic-shutoff-vacation-home', '/shop/', 'https://www.ready.gov/'),
+  serviceInformation(
+    'water-leak-protection-for-new-construction-specify-early',
+    '/',
+    'https://www.epa.gov/watersense/watersense-labeled-homes'
+  ),
+  serviceInformation(
+    'fixture-level-leak-detection-apartments',
+    '/why-every-property-needs-a-water-leak-control-device-in-2025/',
+    'https://www.epa.gov/watersense/fix-leak-week'
+  ),
+  serviceInformation(
+    'commercial-restroom-leak-detection-a-facility-plan',
+    '/',
+    'https://www.epa.gov/watersense/commercial-buildings'
+  ),
 ]
 
 export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...BLOG_INDEX, ...AUTHOR, ...SEE_ALSO, ...BOILERPLATE]
