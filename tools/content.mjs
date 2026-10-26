@@ -881,6 +881,27 @@ const BOILERPLATE = [
     '/',
     'https://www.epa.gov/watersense/commercial-buildings'
   ),
+  {
+    id: 'contact-us-trailing-slash',
+    kind: 'replace',
+    allHtml: true,
+    from: 'href="/contact-us"',
+    to: 'href="/contact-us/"',
+    expect: 23,
+    why: `T-72: /contact-us answers 301 to /contact-us/, so these buttons cost a
+      click a redirect. Two on each of the eight city pages, the homepage and the
+      two landers, one on /buy-now/. Link targets only; no wording changes.`,
+  },
+  {
+    id: 'buy-now-trailing-slash',
+    kind: 'replace',
+    allHtml: true,
+    from: 'href="/buy-now"',
+    to: 'href="/buy-now/"',
+    expect: 1,
+    why: `T-72: /buy-now answers 301 to /buy-now/; one link on /contact-us/.
+      The closing quote keeps /buy-now-lander/ links untouched.`,
+  },
 ]
 
 export const CONTENT = [...BATTERY, ...META, ...SPECS, ...OVERLAYS, ...BRAND, ...IMAGES, ...CHECKOUT_IMAGES, ...TABLE_ICONS, ...TABLE_MOBILE, ...BLOG_INDEX, ...NEW_POST_LINKS, ...AUTHOR, ...SEE_ALSO, ...BOILERPLATE]
